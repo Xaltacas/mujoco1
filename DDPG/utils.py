@@ -38,15 +38,16 @@ class ReplayBuffer(object):
   buffer and randomly samples tuples from this buffer on demand.
   """
 
-  def __init__(self, buffer_size, state_dim):
+  def __init__(self, buffer_size, state_dim, action_dim):
     self.buffer_size = buffer_size
     self.state_dim = state_dim
+    self.action_dim = action_dim
 
     self.cursor_write_start = 0
     self.cursor_read_end = 0
 
     self.states = np.empty((buffer_size, self.state_dim), dtype=np.float32)
-    self.actions = np.empty((buffer_size,), dtype=np.int32)
+    self.actions = np.empty((buffer_size,self.action_dim), dtype=np.int32)
     self.rewards = np.empty((buffer_size,), dtype=np.int32)
     self.states_next = np.empty_like(self.states)
 
@@ -91,7 +92,7 @@ def mlp(inp, inp_dim, outp_dim, track_scope=None, hidden=None, f=tf.tanh, bias_o
 
         #Wi = ((track_scope and match_variable(Wi_name, track_scope))
         #      or tf.compat.v1.get_variable("W%i" % i, (src_dim, tgt_dim)))
-        Wi = tf.Variable(tf.random.normal(shape=(src_dim, tgt_dim),stddev=0.2),name = Wi_name)
+        Wi = tf.Variable(tf.random.normal(shape=(src_dim, tgt_dim),stddev=0.5),name = Wi_name)
         x = tf.matmul(x, Wi)
 
         final_layer = i == len(layer_dims) - 2

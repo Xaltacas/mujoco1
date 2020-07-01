@@ -115,7 +115,7 @@ class DPG(object):
         self.critic_params = critic_params
 
         # Policy objective: maximize on-policy critic activations
-        self.policy_objective = tf.reduce_mean(self.critic)
+        self.policy_objective = -tf.reduce_mean(self.critic)
 
         # Critic objective: minimize MSE of off-policy Q-value predictions
         q_errors = tf.square(self.q_targets - self.critic)
@@ -167,7 +167,7 @@ def track_model_updates(main_name, track_name, tau):
     return tf.group(*updates)
 
 
-def play_one(env, dpg, policy_update, critic_update, gamma, exploration = True):
+def play_one(env, dpg, buffer, exploration = True):
     sess = tf.compat.v1.get_default_session()
     observation = env.reset()
     done = False
@@ -176,12 +176,12 @@ def play_one(env, dpg, policy_update, critic_update, gamma, exploration = True):
 
     obs = np.concatenate((observation["observation"],observation["desired_goal"])).reshape(1,13)
     rewards = []
-    buffer = Buffer()
+    #buffer = Buffer()
 
     while not done and iters < 2000:
         # if we reach 2000, just quit, don't want this going forever
         # the 200 limit seems a bit early
-        action = sess.run(dpg.policy, {dpg.inputs: obs}).reshape(4,)
+        action = sess.run(dpg.policy, {dpg.inputs: obs})
         if exploration:
             action += np.random.randn(4) * 0.1
         #print(action.shape)
@@ -190,20 +190,16 @@ def play_one(env, dpg, policy_update, critic_update, gamma, exploration = True):
         p_obs = np.concatenate((prev_observation["observation"],prev_observation["desired_goal"])).reshape(1,13)
 
         #print(action)
-        if(math.isnan(action[0])):
+        if(math.isnan(action[0][0])):
             print("\033[4;91m", end='')
             print("ATTENTION action NaN")
             return 0
-        observation, reward, done, info = env.step(np.clip(action,-1,1))
-
+        observation, reward, done, info = env.step(np.clip(action.reshape(4,),-1,1))
         obs = np.concatenate((observation["observation"],observation["desired_goal"])).reshape(1,13)
+
         buffer.extend(p_obs,action,reward,obs)
-
-        if iters % FLAGS.eval_interval == 0:
-            cost = train_batch(dpg, policy_update, critic_update, buffer)
-
-
         rewards.append(reward)
+
         if 'visu' in sys.argv:
             env.render()
         iters += 1
@@ -274,13 +270,15 @@ def main():
         totalrewards = np.empty(N)
         costs = np.empty(N)
 
-        buff = ReplayBuffer(FLAGS.buffer_size,D)
+        buffer = ReplayBuffer(FLAGS.buffer_size,D,K)
 
         for n in range(N):
-            explo = not(n % 10 == 0)
-
-            totalreward = play_one(env, dpg, policy_update, critic_update, FLAGS.gamma,explo)
+            explo = not(n % FLAGS.eval_interval == 0)
+            totalreward = play_one(env, dpg, buffer, explo)
             totalrewards[n] = totalreward
+
+            train_batch(dpg, policy_update, critic_update, buffer)
+
             if n % 50 == 0:
                 print("\033[0;97m", end='')
                 print("Episode: {}  total reward: {:.5}  avg reward (last 50): {:.5}".format(n,totalreward,totalrewards[max(0, n-50):(n+1)].mean()))
