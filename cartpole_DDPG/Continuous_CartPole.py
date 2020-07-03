@@ -74,8 +74,8 @@ class ContinuousCartPoleEnv(gym.Env):
         return (x, x_dot, theta, theta_dot)
 
     def step(self, action):
-        #assert self.action_space.contains(action), \
-        #    str(action.shape)+str(self.action_space.shape)+ "%r (%s) invalid" % (action, type(action))
+        assert self.action_space.contains(action), \
+            str(action.shape)+str(self.action_space.shape)+ "%r (%s) invalid" % (action, type(action))
         # Cast action to float to strip np trappings
         force = self.force_mag * float(action)
         self.state = self.stepPhysics(force)
@@ -87,11 +87,11 @@ class ContinuousCartPoleEnv(gym.Env):
         done = bool(done)
 
         if not done:
-            reward = 1.0
+            reward = -(theta**2 + 0.1*theta_dot**2 + x**2 + 0.1*x**2) + 1
         elif self.steps_beyond_done is None:
             # Pole just fell!
             self.steps_beyond_done = 0
-            reward = 1.0
+            reward = -20
         else:
             if self.steps_beyond_done == 0:
                 logger.warn("""

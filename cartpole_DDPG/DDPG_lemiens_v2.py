@@ -42,11 +42,11 @@ flags.DEFINE_integer("eval_interval", 10,
 flags.DEFINE_float("policy_lr", 0.0001, "")
 flags.DEFINE_float("critic_lr", 0.00001, "")
 flags.DEFINE_float("momentum", 0.9, "")
-flags.DEFINE_float("gamma", 0, "")
-flags.DEFINE_float("tau", 1, "")
+flags.DEFINE_float("gamma", 0.90, "")
+flags.DEFINE_float("tau", 0.01, "")
 
-critic_layers = [10,10,6]
-actor_layers = [10,10,6]
+critic_layers = [400,300]
+actor_layers = [400,300]
 
 
 class DPG(object):
@@ -140,10 +140,10 @@ class DPG(object):
 
 
 def policy_model(input, input_dim, layers_dims, output_dims, name="policy", reuse=None, track_scope=None):
-    with tf.compat.v1.variable_scope(name, reuse=reuse, initializer=tf.compat.v1.truncated_normal_initializer(stddev=0.5)):
+    with tf.compat.v1.variable_scope(name, reuse=reuse, initializer=tf.compat.v1.truncated_normal_initializer(stddev=0.05)):
         #return tf.math.l2_normalize(mlp(input, input_dim, output_dims, hidden=layers_dims, track_scope=track_scope))
-        #return tf.tanh(mlp(input, input_dim, output_dims, hidden=layers_dims, track_scope=track_scope))
-        return mlp(input, input_dim, output_dims, hidden=layers_dims, track_scope=track_scope)
+        return tf.tanh(mlp(input, input_dim, output_dims, hidden=layers_dims, track_scope=track_scope))
+        #return mlp(input, input_dim, output_dims, hidden=layers_dims, track_scope=track_scope)
 
 
 
@@ -195,7 +195,7 @@ def play_one(env, dpg, policy_update, critic_update, buffer, exploration = True)
         # the 200 limit seems a bit early
         action = sess.run(dpg.policy, {dpg.inputs: observation.reshape(1,4)})
         if exploration:
-            action += np.random.randn(1) * 0.1
+            action += np.clip(np.random.randn(1) * 0.1,-1,1)
         #print(action.shape)
 
         prev_observation = observation
@@ -211,7 +211,7 @@ def play_one(env, dpg, policy_update, critic_update, buffer, exploration = True)
         #print(action.reshape(1,).shape)
         #print("+++++++")
 
-        observation, reward, done, info = env.step(np.clip(action,-1,1))
+        observation, reward, done, info = env.step(np.clip(action.reshape(1,),-1,1))
 
         buffer.extend(prev_observation,action,reward,observation)
         rewards.append(reward)
@@ -222,7 +222,7 @@ def play_one(env, dpg, policy_update, critic_update, buffer, exploration = True)
         if 'visu' in sys.argv:
             env.render()
         iters += 1
-
+    #print(iters)
     return np.sum(rewards) , np.mean(costs)
 
 
@@ -315,7 +315,7 @@ def main():
                 costs[n] = cost
                 tf.summary.scalar("rewards",totalreward,step = n)
                 tf.summary.scalar("costs", cost, step = n)
-                writer.flush()
+                wf = writer.flush()
 
                 if n % 50 == 0:
                     print("\033[0;97m", end='')

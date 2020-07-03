@@ -1,5 +1,6 @@
-import tflearn
+#import tflearn
 import tensorflow as tf
+import numpy as np
 
 
 class ActorNetwork(object):
@@ -16,12 +17,12 @@ class ActorNetwork(object):
         # Actor Network
         self.inputs, self.out, self.scaled_out = self.create_actor_network()
 
-        self.network_params = tf.trainable_variables()
+        self.network_params = tf.compat.v1.trainable_variables()
 
         # Target Network
         self.target_inputs, self.target_out, self.target_scaled_out = self.create_actor_network()
 
-        self.target_network_params = tf.trainable_variables()[
+        self.target_network_params = tf.compat.v1.trainable_variables()[
                                      len(self.network_params):]
 
         # Op for periodically updating target network with online network
@@ -32,34 +33,53 @@ class ActorNetwork(object):
              for i in range(len(self.target_network_params))]
 
         # This gradient will be provided by the critic network
-        self.action_gradient = tf.placeholder(tf.float32, [None, self.a_dim])
+        self.action_gradient = tf.compat.v1.placeholder(tf.float32, [None, self.a_dim])
 
         # Combine the gradients here
         self.unnormalized_actor_gradients = tf.gradients(
             self.scaled_out, self.network_params, -self.action_gradient)
-        self.actor_gradients = list(map(lambda x: tf.div(x, self.batch_size), self.unnormalized_actor_gradients))
+        self.actor_gradients = list(map(lambda x: tf.math.divide(x, self.batch_size), self.unnormalized_actor_gradients))
 
         # Optimization Op
-        self.optimize = tf.train.AdamOptimizer(self.learning_rate). \
+        self.optimize = tf.compat.v1.train.AdamOptimizer(self.learning_rate). \
             apply_gradients(zip(self.actor_gradients, self.network_params))
 
         self.num_trainable_vars = len(
             self.network_params) + len(self.target_network_params)
 
     def create_actor_network(self):
-        inputs = tflearn.input_data(shape=[None, self.s_dim])
-        net = tflearn.fully_connected(inputs, 400)
-        net = tflearn.layers.normalization.batch_normalization(net)
-        net = tflearn.activations.relu(net)
-        net = tflearn.fully_connected(net, 300)
-        net = tflearn.layers.normalization.batch_normalization(net)
-        net = tflearn.activations.relu(net)
+        #inputs = tflearn.input_data(shape=[None, self.s_dim])
+        inputs = tf.compat.v1.placeholder(tf.float32, (None, self.s_dim))
+
+        #net = tflearn.fully_connected(inputs, 400)
+        #net = tflearn.layers.normalization.batch_normalization(net)
+        #net = tflearn.activations.relu(net)
+        W1 = tf.Variable(tf.random.normal(shape =(self.s_dim, 400)))
+        net = tf.matmul(inputs, W1)
+        b1 = tf.Variable(np.zeros(shape = (400,),dtype="float32"))
+        net = net + b1
+        net = tf.nn.relu(net)
+
+        #net = tflearn.fully_connected(net, 300)
+        #net = tflearn.layers.normalization.batch_normalization(net)
+        #net = tflearn.activations.relu(net)
+
+        W2 = tf.Variable(tf.random.normal(shape=(400,300)))
+        net = tf.matmul(net, W2)
+        b2 = tf.Variable(np.zeros(shape =(300,),dtype="float32"))
+        net = net + b2
+        net = tf.nn.relu(net)
+
         # Final layer weights are init to Uniform[-3e-3, 3e-3]
-        w_init = tflearn.initializations.uniform(minval=-0.003, maxval=0.003)
-        out = tflearn.fully_connected(
-            net, self.a_dim, activation='tanh', weights_init=w_init)
+        #w_init = tflearn.initializations.uniform(minval=-0.003, maxval=0.003)
+        #out = tflearn.fully_connected(net, self.a_dim, activation='tanh', weights_init=w_init)
+        W3 = tf.Variable(np.float32(np.random.uniform(low=-0.003, high=0.003,size =(300,self.a_dim))))
+        out = tf.matmul(net,W3)
+        b3 = tf.Variable(np.zeros(shape =(self.a_dim,),dtype="float32"))
+        out = out + b3
+
         # Scale output to -action_bound to action_bound
-        scaled_out = tf.multiply(out, self.action_bound)
+        scaled_out = tf.nn.tanh(tf.multiply(out, self.action_bound))
         return inputs, out, scaled_out
 
     def train(self, inputs, a_gradient):

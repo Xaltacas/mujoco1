@@ -13,11 +13,12 @@ from noise import OUNoise
 from actor import ActorNetwork
 from critic import CriticNetwork
 from replay_buffer import ReplayBuffer
-
+import Continuous_CartPole
+from Continuous_CartPole import *
 
 def train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, ep):
 
-    sess.run(tf.global_variables_initializer())
+    sess.run(tf.compat.v1.global_variables_initializer())
 
     # Initialize target network weights
     actor.update_target_network()
@@ -34,12 +35,21 @@ def train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, ep):
 
         state = env.reset()
         score = 0
+        costs = []
+
+        if(i % 10 == 0):
+            print("serious:")
+            explo=0
+        else:
+            explo=1
 
         for j in range(max_steps):
 
             env.render()
 
-            action = actor.predict(np.reshape(state, (1, actor.s_dim))) + actor_noise()
+            action = np.clip(actor.predict(np.reshape(state, (1, actor.s_dim))) + actor_noise()*explo,-1,1)
+
+            #print(action)
             next_state, reward, done, info = env.step(action[0])
             replay_buffer.add(np.reshape(state, (actor.s_dim,)), np.reshape(action, (actor.a_dim,)), reward,
                               done, np.reshape(next_state, (actor.s_dim,)))
@@ -57,6 +67,7 @@ def train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, ep):
 
             # Update the critic given the targets
             predicted_q_value, _ = critic.train(states, actions, np.reshape(y, (min_batch, 1)))
+            costs.append(y-predicted_q_value)
 
             # Update the actor policy using the sampled gradient
             a_outs = actor.predict(states)
@@ -71,9 +82,12 @@ def train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, ep):
             score += reward
 
             if done:
-                print('Reward: {} | Episode: {}/{}'.format(int(score), i, max_episodes))
+
                 break
 
+        print('Total reward: {:.5} | Episode: {}/{}'.format(score, i, max_episodes))
+        print("cost : {}".format(np.mean(costs)))
+        print("step = " + str(j))
         score_list.append(score)
 
     return score_list
@@ -81,15 +95,15 @@ def train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, ep):
 
 if __name__ == '__main__':
 
-    with tf.Session() as sess:
+    with tf.compat.v1.Session() as sess:
 
         env = ContinuousCartPoleEnv()
 
         env.seed(0)
         np.random.seed(0)
-        tf.set_random_seed(0)
+        #tf.set_random_seed(0)
 
-        ep = 300
+        ep = 10000
         tau = 0.001
         gamma = 0.99
         min_batch = 64
@@ -104,6 +118,7 @@ if __name__ == '__main__':
         actor_noise = OUNoise(mu=np.zeros(action_dim))
         actor = ActorNetwork(sess, state_dim, action_dim, action_bound, actor_lr, tau, min_batch)
         critic = CriticNetwork(sess, state_dim, action_dim, critic_lr, tau, gamma, actor.get_num_trainable_vars())
+        tf.compat.v1.summary.FileWriter("logdir/graphpend", graph=tf.compat.v1.get_default_graph())
 
         scores = train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, ep)
         plt.plot([i + 1 for i in range(0, ep, 3)], scores[::3])
