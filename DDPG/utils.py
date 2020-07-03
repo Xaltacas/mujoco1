@@ -2,34 +2,6 @@ import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
 
-#class Buffer:
-#    def __init__(self):
-#        self.s = []
-#        self.a = []
-#        self.r = []
-#        self.s1 = []
-#        self.size = 0
-#
-#    def extend(self,s,a,r,s1):
-#        self.s.append(s)
-#        self.a.append(a)
-#        self.r.append(r)
-#        self.s1.append(s1)
-#        self.size += 1
-#
-#    def sample(self,size):
-#
-#        if self.size < size:
-#            raise ValueError("Not enough examples in buffer (just %i) to fill a batch of %i."
-#               % (self.size, size))
-#
-#        idxs = np.random.choice(range(self.size), size, replace=False)
-#        #print("======")
-#        #print(idxs)
-#        #print("======")
-#        idxs = idxs.astype(int)
-#        return np.squeeze(np.array(self.s)[idxs]), np.squeeze(np.array(self.a)[idxs]), np.squeeze(np.array(self.r)[idxs]), np.squeeze(np.array(self.s1)[idxs])
-
 class ReplayBuffer(object):
 
   """
@@ -90,9 +62,10 @@ def mlp(inp, inp_dim, outp_dim, track_scope=None, hidden=None, f=tf.tanh, bias_o
     for i, (src_dim, tgt_dim) in enumerate(zip(layer_dims, layer_dims[1:])):
         Wi_name, bi_name = "W" +str(i), "b"+str(i)
 
-        Wi = ((track_scope and match_variable(Wi_name, track_scope))
-              or tf.compat.v1.get_variable("W%i" % i, (src_dim, tgt_dim),initializer = tf.compat.v1.random_normal_initializer(stddev = 0.3)))
+        #Wi = ((track_scope and match_variable(Wi_name, track_scope))
+        #      or tf.compat.v1.get_variable("W%i" % i, (src_dim, tgt_dim),initializer = tf.compat.v1.random_normal_initializer(stddev = 0.3)))
         #Wi = tf.Variable(tf.random.normal(shape=(src_dim, tgt_dim),stddev=0.5),name = Wi_name)
+        Wi = tf.compat.v1.get_variable("W%i" % i, (src_dim, tgt_dim),initializer = tf.compat.v1.random_normal_initializer(stddev = 0.3))
         x = tf.matmul(x, Wi)
 
         final_layer = i == len(layer_dims) - 2

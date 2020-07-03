@@ -278,11 +278,11 @@ def main():
         print("LE DEBUT")
         print("===================")
 
-        N = 100000
+        N = 10000
         totalrewards = np.empty(N)
         costs = np.empty(N)
 
-        buff = ReplayBuffer(FLAGS.buffer_size,D)
+        buff = ReplayBuffer(FLAGS.buffer_size,D,K)
 
         for n in range(N):
             explo = not(n % 10 == 0)

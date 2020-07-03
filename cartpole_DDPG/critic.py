@@ -42,6 +42,7 @@ class CriticNetwork(object):
 
     def create_critic_network(self):
 
+        
         inputs = tflearn.input_data(shape=[None, self.s_dim])
         action = tflearn.input_data(shape=[None, self.a_dim])
         net = tflearn.fully_connected(inputs, 400)

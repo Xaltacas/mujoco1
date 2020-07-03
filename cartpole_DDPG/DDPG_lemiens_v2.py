@@ -8,12 +8,13 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 from gym import wrappers
 from datetime import datetime
-import custom_env
 import time
 import logging
 import math
 import utils
 from utils import *
+import Continuous_CartPole
+from Continuous_CartPole import *
 
 import tensorboard
 tf.compat.v1.disable_eager_execution()
@@ -30,7 +31,7 @@ FLAGS = flags.FLAGS
 flags.DEFINE_string("policy_dims", "20", "")
 flags.DEFINE_string("critic_dims", "", "")
 
-flags.DEFINE_integer("batchs", 10, "")
+flags.DEFINE_integer("batchs", 1, "")
 flags.DEFINE_integer("batch_size", 64, "")
 flags.DEFINE_integer("buffer_size", 10 ** 6, "")
 
@@ -41,11 +42,11 @@ flags.DEFINE_integer("eval_interval", 10,
 flags.DEFINE_float("policy_lr", 0.0001, "")
 flags.DEFINE_float("critic_lr", 0.00001, "")
 flags.DEFINE_float("momentum", 0.9, "")
-flags.DEFINE_float("gamma", 0.99, "")
-flags.DEFINE_float("tau", 0.01, "")
+flags.DEFINE_float("gamma", 0, "")
+flags.DEFINE_float("tau", 1, "")
 
-critic_layers = [10]
-actor_layers = [10]
+critic_layers = [10,10,6]
+actor_layers = [10,10,6]
 
 
 class DPG(object):
@@ -65,13 +66,15 @@ class DPG(object):
             self._make_inputs()
             self._make_graph()
             self._make_objectives()
+            tf.compat.v1.summary.FileWriter("logdir/graphBT", graph=tf.compat.v1.get_default_graph())
+            self._make_initialize()
             self._make_updates()
 
     def _make_inputs(self):
-        self.inputs = tf.compat.v1.placeholder(tf.float32, (None, self.obs_size),name="inputs")
+        self.inputs = tf.compat.v1.placeholder(tf.float32, (None, self.obs_size),name="observation")
         self.q_targets = tf.compat.v1.placeholder(tf.float32, (None,), name="q_targets")
         self.tau = self.tau or tf.compat.v1.placeholder(tf.float32, (1,), name="tau")
-        self.q_action = tf.compat.v1.placeholder(tf.float32, (None, self.action_size),name="inputs")
+        self.q_action = tf.compat.v1.placeholder(tf.float32, (None, self.action_size),name="action")
 
     def _make_graph(self):
         # Build main model: actor
@@ -87,28 +90,6 @@ class DPG(object):
         self.policyP = policy_model(self.inputs, self.obs_size, actor_layers, self.action_size, name="policyP")
         self.criticP = critic_model(self.inputs, self.obs_size, self.policyP, self.action_size, critic_layers, name="criticP")
 
-        updates = []
-        params = [var for var in tf.compat.v1.global_variables() if "policy/" in var.name]
-        track_params = [var for var in tf.compat.v1.global_variables() if "policyP/" in var.name]
-        print("\033[4;93m")
-        print("Sanity check:")
-        print("\033[0;2;93m",end="")
-        for param,track_param in zip(params,track_params):
-            print("assign : " + track_param.name + "    with : " + param.name)
-            update_op = tf.compat.v1.assign(track_param, param)
-            updates.append(update_op)
-
-        params = [var for var in tf.compat.v1.global_variables() if "critic/" in var.name]
-        track_params = [var for var in tf.compat.v1.global_variables() if "criticP/" in var.name]
-
-        for param,track_param in zip(params,track_params):
-            print("assign : " + track_param.name + "    with : " + param.name)
-            update_op = tf.compat.v1.assign(track_param, param)
-            updates.append(update_op)
-
-        self.init_variables = tf.group(*updates)
-        print("\033[0;3;36m",end="")
-
 
     def _make_objectives(self):
         # TODO: Hacky, will cause clashes if multiple DPG instances.
@@ -120,26 +101,49 @@ class DPG(object):
         self.critic_params = critic_params
 
         # Policy objective: maximize on-policy critic activations
-        self.policy_objective = -tf.reduce_mean(self.critic)
+        self.policy_objective = -tf.reduce_mean(self.critic,name = "policyObjective")
 
         # Critic objective: minimize MSE of off-policy Q-value predictions
         q_errors = tf.square(self.q_targets - self.critic_off)
-        self.critic_objective = tf.reduce_mean(q_errors)
+        self.critic_objective = tf.reduce_mean(q_errors, name = "criticObjective")
 
+    def _make_initialize(self):
+        with tf.compat.v1.variable_scope("initalize"):
+            updates = []
+            params = [var for var in tf.compat.v1.global_variables() if "policy/" in var.name]
+            track_params = [var for var in tf.compat.v1.global_variables() if "policyP/" in var.name]
+            print("\033[4;93m")
+            print("Sanity check:")
+            print("\033[0;2;93m",end="")
+            for param,track_param in zip(params,track_params):
+                print("assign : " + track_param.name + "    with : " + param.name)
+                update_op = tf.compat.v1.assign(track_param, param)
+                updates.append(update_op)
+
+            params = [var for var in tf.compat.v1.global_variables() if "critic/" in var.name]
+            track_params = [var for var in tf.compat.v1.global_variables() if "criticP/" in var.name]
+
+            for param,track_param in zip(params,track_params):
+                print("assign : " + track_param.name + "    with : " + param.name)
+                update_op = tf.compat.v1.assign(track_param, param)
+                updates.append(update_op)
+
+            self.init_variables = tf.group(*updates)
+        print("\033[0;3;36m",end="")
 
     def _make_updates(self):
         # Make tracking updates.
         policy_track_update = track_model_updates("%s/policy" % self.name, "%s/policyP" % self.name, self.tau)
         critic_track_update = track_model_updates("%s/critic" % self.name, "%s/criticP" % self.name, self.tau)
-        self.track_update = tf.group(policy_track_update, critic_track_update)
+        self.track_update = tf.group(policy_track_update, critic_track_update,name="trackUpdate")
 
 
 
 def policy_model(input, input_dim, layers_dims, output_dims, name="policy", reuse=None, track_scope=None):
     with tf.compat.v1.variable_scope(name, reuse=reuse, initializer=tf.compat.v1.truncated_normal_initializer(stddev=0.5)):
         #return tf.math.l2_normalize(mlp(input, input_dim, output_dims, hidden=layers_dims, track_scope=track_scope))
-        #return mlp(input, input_dim, output_dims, hidden=layers_dims, track_scope=track_scope)
-        return tf.tanh(mlp(input, input_dim, output_dims, hidden=layers_dims, track_scope=track_scope)*0.1)
+        #return tf.tanh(mlp(input, input_dim, output_dims, hidden=layers_dims, track_scope=track_scope))
+        return mlp(input, input_dim, output_dims, hidden=layers_dims, track_scope=track_scope)
 
 
 
@@ -166,55 +170,60 @@ def track_model_updates(main_name, track_name, tau):
     params = [var for var in tf.compat.v1.global_variables() if var.name.startswith(main_name + "/")]
     track_params = [var for var in tf.compat.v1.global_variables() if var.name.startswith(track_name + "/")]
 
-    for param,track_param in zip(params,track_params):
-        print("track : " + track_param.name + "    with : " + param.name)
-        update_op = tf.compat.v1.assign(track_param,tau * param + (1 - tau) * track_param)
-        updates.append(update_op)
+    with tf.compat.v1.variable_scope("trackOp"):
+        for param,track_param in zip(params,track_params):
+            print("track : " + track_param.name + "    with : " + param.name)
+            update_op = tf.compat.v1.assign(track_param,tau * param + (1 - tau) * track_param)
+            updates.append(update_op)
 
-    print("\033[0;3;36m")
-    return tf.group(*updates)
+        print("\033[0;3;36m")
+        return tf.group(*updates,)
 
 
-def play_one(env, dpg, buffer, exploration = True):
+def play_one(env, dpg, policy_update, critic_update, buffer, exploration = True):
     sess = tf.compat.v1.get_default_session()
     observation = env.reset()
     done = False
     totalreward = 0
     iters = 0
-
-    obs = np.concatenate((observation["observation"],observation["desired_goal"])).reshape(1,13)
     rewards = []
+    costs = []
     #buffer = Buffer()
 
     while not done and iters < 2000:
         # if we reach 2000, just quit, don't want this going forever
         # the 200 limit seems a bit early
-        action = sess.run(dpg.policy, {dpg.inputs: obs})
+        action = sess.run(dpg.policy, {dpg.inputs: observation.reshape(1,4)})
         if exploration:
-            action += np.random.randn(1,4)
+            action += np.random.randn(1) * 0.1
         #print(action.shape)
 
         prev_observation = observation
-        p_obs = np.concatenate((prev_observation["observation"],prev_observation["desired_goal"])).reshape(1,13)
 
         #print(action)
-        if(math.isnan(action[0][0])):
+        if(math.isnan(action[0])):
             print("\033[4;91m", end='')
-            print("ATTENTION action NaN             ")
+            print("ATTENTION action NaN")
             return 0
-        observation, reward, done, info = env.step(np.clip(action.reshape(4,),-1,1))
-        #observation, reward, done, info = env.step(action.reshape(4,))
 
-        obs = np.concatenate((observation["observation"],observation["desired_goal"])).reshape(1,13)
 
-        buffer.extend(p_obs,action,reward,obs)
+        #print("+++++++")
+        #print(action.reshape(1,).shape)
+        #print("+++++++")
+
+        observation, reward, done, info = env.step(np.clip(action,-1,1))
+
+        buffer.extend(prev_observation,action,reward,observation)
         rewards.append(reward)
+
+        cost = train_batch(dpg, policy_update, critic_update, buffer)
+        costs.append(cost)
 
         if 'visu' in sys.argv:
             env.render()
         iters += 1
 
-    return np.sum(rewards)
+    return np.sum(rewards) , np.mean(costs)
 
 
 def train_batch(dpg, policy_update, critic_update, buffer):
@@ -252,13 +261,13 @@ def train_mini_batch(dpg, policy_update, critic_update, buffer):
 
 def build_updates(dpg):
 
-    policy_optim = tf.compat.v1.train.AdamOptimizer()
+    policy_optim = tf.compat.v1.train.AdamOptimizer(FLAGS.policy_lr)
     #policy_optim = tf.compat.v1.train.GradientDescentOptimizer(FLAGS.policy_lr)
     policy_update = policy_optim.minimize(dpg.policy_objective, var_list=dpg.policy_params)
 
     #critic_optim = tf.compat.v1.train.MomentumOptimizer(FLAGS.critic_lr, FLAGS.momentum)
     #critic_optim = tf.compat.v1.train.AdamOptimizer(FLAGS.critic_lr)
-    critic_optim = tf.compat.v1.train.AdamOptimizer()
+    critic_optim = tf.compat.v1.train.AdamOptimizer(FLAGS.critic_lr)
     critic_update = critic_optim.minimize(dpg.critic_objective, var_list=dpg.critic_params)
 
     return policy_update, critic_update
@@ -267,16 +276,18 @@ def build_updates(dpg):
 
 def main():
     tic = time.time()
-    env = gym.make("custom-v0")
+    env = ContinuousCartPoleEnv()
     obs = env.reset()
     done = False
 
-    D = env.observation_space["achieved_goal"].shape[0] + env.observation_space["observation"].shape[0]
+    D = env.observation_space.shape[0]
     K = env.action_space.shape[0]
     dpg = DPG(D,K)
+    tf.compat.v1.summary.FileWriter("logdir/graphAT", graph=tf.compat.v1.get_default_graph())
+
+
     policy_update, critic_update = build_updates(dpg)
 
-    #tf.compat.v1.summary.FileWriter("logdir/graph", graph=tf.compat.v1.get_default_graph())
     with tf.compat.v1.Session() as sess:
         sess.run(tf.compat.v1.global_variables_initializer())
         sess.run(dpg.init_variables)
@@ -297,10 +308,10 @@ def main():
         with writer.as_default():
             for n in range(N):
                 explo = not(n % FLAGS.eval_interval == 0)
-                totalreward = play_one(env, dpg, buffer, explo)
+                totalreward, cost = play_one(env, dpg, policy_update, critic_update, buffer, explo)
                 totalrewards[n] = totalreward
 
-                cost = train_batch(dpg, policy_update, critic_update, buffer)
+                #cost = train_batch(dpg, policy_update, critic_update, buffer)
                 costs[n] = cost
                 tf.summary.scalar("rewards",totalreward,step = n)
                 tf.summary.scalar("costs", cost, step = n)
