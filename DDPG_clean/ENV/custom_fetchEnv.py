@@ -158,6 +158,8 @@ class FetchEnv(ENV.custom_robotEnv.RobotEnv):
             object_qpos = self.sim.data.get_joint_qpos('object0:joint')
             assert object_qpos.shape == (7,)
             object_qpos[:2] = object_xpos
+            if not(self.target_in_the_air):
+                object_qpos[2] = 0.5
             self.sim.data.set_joint_qpos('object0:joint', object_qpos)
 
         self.sim.forward()
