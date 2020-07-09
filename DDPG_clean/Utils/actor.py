@@ -57,11 +57,15 @@ class ActorNetwork(object):
 
             for i, (src_dim, tgt_dim) in enumerate(zip(layer_dims, layer_dims[1:])):
                 Wi_name, bi_name = "W" +str(i), "b"+str(i)
+                final_layer = i == len(layer_dims) - 2
 
                 #Wi = ((track_scope and match_variable(Wi_name, track_scope))
                 #      or tf.compat.v1.get_variable("W%i" % i, (src_dim, tgt_dim),initializer = tf.compat.v1.random_normal_initializer(stddev = 0.3)))
                 #Wi = tf.Variable(tf.random.normal(shape=(src_dim, tgt_dim),stddev=0.5),name = Wi_name)
-                Wi = tf.Variable(tf.random.normal(shape =(src_dim, tgt_dim)), name =  Wi_name)
+                if not final_layer:
+                    Wi = tf.Variable(tf.random.normal(shape =(src_dim, tgt_dim)), name =  Wi_name)
+                else:
+                    Wi = tf.Variable(np.float32(np.random.uniform(low=-0.003, high=0.003, size =(src_dim, tgt_dim))), name =  Wi_name)
                 #Wi = tf.compat.v1.get_variable("W%i" % i, (src_dim, tgt_dim),initializer = tf.compat.v1.random_normal_initializer(stddev = 0.3))
                 x = tf.matmul(x, Wi)
 
@@ -69,11 +73,12 @@ class ActorNetwork(object):
                 #bi = ((track_scope and match_variable(bi_name, track_scope))
                 #    or tf.compat.v1.get_variable("b%i" % i, (tgt_dim,),initializer=tf.zeros_initializer))
                 x += bi
-                scaled_x = tf.nn.tanh(x)
 
-                final_layer = i == len(layer_dims) - 2
                 if not final_layer:
+                    scaled_x = tf.nn.relu(x)
                     x = scaled_x
+                else:
+                    scaled_x = tf.nn.tanh(x)
 
             scaled_x = tf.multiply(scaled_x, self.action_bound)
         return inputs, x, scaled_x

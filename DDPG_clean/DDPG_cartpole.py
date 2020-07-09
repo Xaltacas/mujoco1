@@ -1,10 +1,11 @@
 """
-honteusement volé ici : https://github.com/shivaverma/OpenAIGym/tree/master/pendulam/pendulam-v0
+honteusement volé ici : https://github.com/shivaverma/OpenAIGym/
 """
 
 
 import gym
 import sys
+import time
 import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
@@ -21,6 +22,15 @@ from Continuous_CartPole import *
 def train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, ep):
 
     sess.run(tf.compat.v1.global_variables_initializer())
+    if "--save" in sys.argv:
+        saver = tf.compat.v1.train.Saver()
+
+    if "--load" in sys.argv:
+        loader = tf.compat.v1.train.Saver()
+        arg_index = sys.argv.index("--load")
+        save_name = sys.argv[arg_index + 1]
+        loader.restore(sess,"savedir/"+save_name+"/save")
+        sess.run(tf.compat.v1.local_variables_initializer())
 
     # Initialize target network weights
     actor.update_target_network()
@@ -32,15 +42,20 @@ def train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, ep):
     max_episodes = ep
     max_steps = 500
     score_list = []
+    tcostlist = []
+
+    tic = time.time()
 
     for i in range(max_episodes):
 
         state = env.reset()
         score = 0
+        cost = 0
         costs = []
+        steps = 0
 
         if(i % 10 == 0):
-            print("serious:")
+            #print("serious:")
             explo=0
         else:
             explo=1
@@ -51,7 +66,7 @@ def train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, ep):
                 env.render()
 
             action = np.clip(actor.predict(np.reshape(state, (1, actor.s_dim))) + actor_noise()*explo,-1,1)
-
+            steps += 1
             #print(action)
             next_state, reward, done, info = env.step(action[0])
             replay_buffer.add(np.reshape(state, (actor.s_dim,)), np.reshape(action, (actor.a_dim,)), reward,
@@ -84,14 +99,33 @@ def train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, ep):
             state = next_state
             score += reward
 
+            tac = time.time()
+            print("\033[3;4;91m", end='')
+            print("temps total : {} secondes\r".format(int(tac - tic)), end='')
+
             if done:
 
                 break
 
-        print('Total reward: {:.5} | Episode: {}/{}'.format(score, i, max_episodes))
-        print("cost : {}".format(np.mean(costs)))
-        print("step = " + str(j))
+        tcost = np.mean(costs)
+        tcostlist.append(tcost)
         score_list.append(score)
+
+        if i % 10 == 0:
+            print("\033[0;1;4;97m", end='')
+            print("Episode:", end = "")
+            print("\033[0;97m", end='')
+            print(" {}                                             ".format(i))
+            print("total reward: {:.5}  avg reward (last 10): {:.5}".format(score,np.mean(score_list[max(0, i-10):(i+1)])))
+            print("cost: {:.5}  avg cost (last 10): {:.5}".format(tcost,np.mean(tcostlist[max(0, i-10):(i+1)])))
+            print("{} steps".format(steps))
+            if "--save" in sys.argv:
+                arg_index = sys.argv.index("--save")
+                save_name = sys.argv[arg_index + 1]
+                saver.save(sess, "savedir/" + save_name+"/save")
+
+    print("\033[3;4;91m", end='')
+    print("temps total : {} secondes".format(int(tac - tic)))
 
     return score_list
 

@@ -1,11 +1,12 @@
 """
-honteusement volé ici : https://github.com/shivaverma/OpenAIGym/tree/master/pendulam/pendulam-v0
+honteusement volé ici : https://github.com/shivaverma/OpenAIGym/
 """
 
 
 import gym
 import sys
 import time
+import compress_json
 import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
@@ -20,6 +21,18 @@ from ENV.custom_env import *
 def train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, ep):
 
     sess.run(tf.compat.v1.global_variables_initializer())
+    if "--save" in sys.argv:
+        saver = tf.compat.v1.train.Saver()
+
+    if "--load" in sys.argv:
+        loader = tf.compat.v1.train.Saver()
+        arg_index = sys.argv.index("--load")
+        save_name = sys.argv[arg_index + 1]
+        loader.restore(sess,"savedir/"+save_name+"/save")
+        sess.run(tf.compat.v1.local_variables_initializer())
+
+
+
 
     # Initialize target network weights
     actor.update_target_network()
@@ -27,6 +40,19 @@ def train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, ep):
 
     # Initialize replay memory
     replay_buffer = ReplayBuffer(buffer_size, 0)
+
+    if "--loadBuff" in sys.argv:
+        arg_index = sys.argv.index("--loadBuff")
+        buffPath = sys.argv[arg_index + 1]
+        print("loading buffer")
+        tempBuff = compress_json.local_load("preTrain/"+buffPath+".json.gz")
+        nb = buffer_size / len(tempBuff["action"])
+        for i in range(int(nb)):
+            for s,a,r,d,s1 in zip(tempBuff["state"],tempBuff["action"],tempBuff["reward"],tempBuff["done"],tempBuff["next_state"]):
+                replay_buffer.add(np.reshape(s,(actor.s_dim,)),np.reshape(a,(actor.a_dim,)),r,d,np.reshape(s1,(actor.s_dim,)))
+
+        print("buffer loaded")
+
 
     max_episodes = ep
     max_steps = 200
@@ -57,7 +83,7 @@ def train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, ep):
             action = np.clip(actor.predict(np.reshape(state, (1, actor.s_dim))) + actor_noise()*explo,-1,1)
 
             #print(action)
-            next_state, reward, done, info = env.step(action[0])
+            next_state, reward, done, info = env.step(action.reshape(4,))
             next_state = np.concatenate([next_state["observation"],next_state["desired_goal"]])
             replay_buffer.add(np.reshape(state, (actor.s_dim,)), np.reshape(action, (actor.a_dim,)), reward,
                               done, np.reshape(next_state, (actor.s_dim,)))
@@ -109,6 +135,12 @@ def train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, ep):
             print(" {}                                             ".format(i))
             print("total reward: {:.5}  avg reward (last 10): {:.5}".format(score,np.mean(score_list[max(0, i-10):(i+1)])))
             print("cost: {:.5}  avg cost (last 10): {:.5}".format(tcost,np.mean(tcostlist[max(0, i-10):(i+1)])))
+            if "--save" in sys.argv:
+                arg_index = sys.argv.index("--save")
+                save_name = sys.argv[arg_index + 1]
+                saver.save(sess, "savedir/" + save_name+"/save")
+
+
 
     print("\033[3;4;91m", end='')
     print("temps total : {} secondes".format(int(tac - tic)))
@@ -124,7 +156,7 @@ if __name__ == '__main__':
 
         env.seed(0)
         np.random.seed(0)
-        #tf.set_random_seed(0)
+        tf.compat.v1.set_random_seed(0)
 
         ep = 10000
         tau = 0.001
@@ -133,7 +165,7 @@ if __name__ == '__main__':
         actor_lr = 0.0001
         critic_lr = 0.001
         buffer_size = 1000000
-        layers = [800,400,300]
+        layers = [512,256]
 
         state_dim =  env.observation_space["observation"].shape[0] + env.observation_space["desired_goal"].shape[0]
         action_dim = env.action_space.shape[0]

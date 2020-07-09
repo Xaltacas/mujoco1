@@ -53,11 +53,12 @@ class FetchEnv(ENV.custom_robotEnv.RobotEnv):
     def compute_reward(self, achieved_goal, goal, info):
         # Compute distance between goal and the achieved goal.
         d = goal_distance(achieved_goal, goal)
-        #if d > self.previousD:
-        #    reward = -1.
-        #else:
-        #    reward = 1.
-        #self.previousD = d
+        reward = - d*d + (d < self.distance_threshold)*10
+        if d > self.previousD:
+            reward -= 1.
+        else:
+            reward += 1.
+        self.previousD = d
         #return reward
         #if self.reward_type == 'sparse':
         #    return -(d > self.distance_threshold).astype(np.float32) *10
@@ -66,7 +67,7 @@ class FetchEnv(ENV.custom_robotEnv.RobotEnv):
         #        return -d * 100;
         #    else:
         #        return -d * 10
-        return - d*d
+        return reward
 
     # RobotEnv methods
     # ----------------------------

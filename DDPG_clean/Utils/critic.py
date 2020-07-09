@@ -69,8 +69,8 @@ class CriticNetwork(object):
             for i, (src_dim, tgt_dim) in enumerate(zip(layer_dims, layer_dims[1:])):
                 Wi_name, bi_name = "W" +str(i+1), "b"+str(i+1)
 
-                x = tf.nn.tanh(x)
-                a = tf.nn.tanh(a)
+                x = tf.nn.relu(x)
+                a = tf.nn.relu(a)
 
                 #Wi = ((track_scope and match_variable(Wi_name, track_scope))
                 #      or tf.compat.v1.get_variable("W%i" % i, (src_dim, tgt_dim),initializer = tf.compat.v1.random_normal_initializer(stddev = 0.3)))
@@ -91,7 +91,7 @@ class CriticNetwork(object):
 
 
             out = tf.nn.relu(a+x)
-            Wout = tf.Variable(tf.random.normal(shape =(layers[-1], 1)), name =  "Wout")
+            Wout = tf.Variable(np.float32(np.random.uniform(low=-0.003, high=0.003, size =(layers[-1], 1))), name =  "Wout")
             out = tf.matmul(out,Wout)
             bout = tf.Variable(np.zeros(shape = (1,),dtype="float32"),name = "bout")
             out = out + bout
