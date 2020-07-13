@@ -10,9 +10,9 @@ import compress_json
 if __name__ == '__main__':
 
     print("\033[0;1;32m")
-    print("===================")
-    print("Création de donné de train")
-    print("===================")
+    print("=================================")
+    print("Création de donnés d'entrainement")
+    print("=================================")
 
     env = customEnv()
 
@@ -44,7 +44,6 @@ if __name__ == '__main__':
             action = [act[0],act[1],act[2],0]
             prev_state = state
             state, reward, done, info = env.step(action + actor_noise()*0.5)
-            #env.render()
 
             buff["state"].append(np.concatenate([prev_state["observation"],prev_state["desired_goal"]]).tolist())
             buff["action"].append(action)

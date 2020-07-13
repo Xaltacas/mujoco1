@@ -1,8 +1,3 @@
-"""
-honteusement volé ici : https://github.com/shivaverma/OpenAIGym/
-"""
-
-
 import gym
 import sys
 import time
@@ -14,7 +9,6 @@ from Utils.noise import OUNoise
 from Utils.actor import ActorNetwork
 from Utils.critic import CriticNetwork
 from Utils.replay_buffer import ReplayBuffer
-import ENV.Continuous_CartPole
 from ENV.Continuous_CartPole import *
 
 
@@ -59,8 +53,8 @@ def train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, ep):
         costs = []
         steps = 0
 
+        #one serious run every 10 run
         if(i % 10 == 0):
-            #print("serious:")
             explo=0
         else:
             explo=1
@@ -72,7 +66,7 @@ def train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, ep):
 
             action = np.clip(actor.predict(np.reshape(state, (1, actor.s_dim))) + actor_noise()*explo,-1,1)
             steps += 1
-            #print(action)
+
             next_state, reward, done, info = env.step(action[0])
             replay_buffer.add(np.reshape(state, (actor.s_dim,)), np.reshape(action, (actor.a_dim,)), reward,
                               done, np.reshape(next_state, (actor.s_dim,)))

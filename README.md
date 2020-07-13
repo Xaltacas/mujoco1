@@ -1,9 +1,6 @@
-# Implémentation de ML sous mujoco
-## Plein de codes interesants:
-  
+# Le gros des codes que j'ai fait pendant mon stage
+## implémentation de DDPG pour resoudres des environment gym/mujoco:  
 DDPG : [le papier](https://arxiv.org/pdf/1509.02971v2.pdf)  
-Ca marche pas trop pour l'instant mais j'y travaille  
-  
-  
-test :  
-Des trucs en vrac  
+
+
+## autres tests

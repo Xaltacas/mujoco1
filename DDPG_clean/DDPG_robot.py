@@ -1,8 +1,3 @@
-"""
-honteusement volé ici : https://github.com/shivaverma/OpenAIGym/
-"""
-
-
 import gym
 import sys
 import time
@@ -203,7 +198,7 @@ if __name__ == '__main__':
                 state = env.reset()
                 for i in range(200):
                     env.render()
-                    action = np.clip(actor.predict(np.reshape(np.concatenate([state["observation"],state["desired_goal"]]), (1, actor.s_dim)))+ actor_noise()*0.1,-1,1)
+                    action = np.clip(actor.predict(np.reshape(np.concatenate([state["observation"],state["desired_goal"]]), (1, actor.s_dim))),-1,1)
                     next_state, reward, done, info = env.step(np.reshape(action,(4,)))
                     state = next_state
                     if done:

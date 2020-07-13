@@ -1,12 +1,6 @@
-"""
-honteusement volé ici : https://github.com/shivaverma/OpenAIGym/
-"""
-
-
 import gym
 import sys
 import time
-from ENV.lunarLanderContinuous import LunarLanderContinuous
 import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
@@ -15,8 +9,7 @@ from Utils.noise import OUNoise
 from Utils.actor import ActorNetwork
 from Utils.critic import CriticNetwork
 from Utils.replay_buffer import ReplayBuffer
-import Continuous_CartPole
-from Continuous_CartPole import *
+from ENV.lunarLanderContinuous import LunarLanderContinuous
 
 
 

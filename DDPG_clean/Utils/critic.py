@@ -1,4 +1,3 @@
-#import tflearn
 import tensorflow as tf
 import numpy as np
 
@@ -23,8 +22,7 @@ class CriticNetwork(object):
 
         self.target_network_params = tf.compat.v1.trainable_variables()[(len(self.network_params) + num_actor_vars):]
 
-        # Op for periodically updating target network with online network
-        # weights with regularization
+        # Op for periodically updating target network with online network weights with regularization
         with tf.compat.v1.variable_scope("CriticRegu"):
             self.update_target_network_params = \
                 [self.target_network_params[i].assign(tf.multiply(self.network_params[i], self.tau) \
@@ -44,12 +42,8 @@ class CriticNetwork(object):
 
     def create_critic_network(self, layers, name):
 
-
-        #inputs = tflearn.input_data(shape=[None, self.s_dim])
         inputs = tf.compat.v1.placeholder(tf.float32, (None, self.s_dim))
-        #action = tflearn.input_data(shape=[None, self.a_dim])
         action = tf.compat.v1.placeholder(tf.float32, (None, self.a_dim))
-        #net = tflearn.fully_connected(inputs, 400)
 
         with tf.compat.v1.variable_scope(name):
             layer_dims = layers
@@ -65,27 +59,20 @@ class CriticNetwork(object):
             a += bia
 
 
-
             for i, (src_dim, tgt_dim) in enumerate(zip(layer_dims, layer_dims[1:])):
                 Wi_name, bi_name = "W" +str(i+1), "b"+str(i+1)
 
                 x = tf.nn.relu(x)
                 a = tf.nn.relu(a)
 
-                #Wi = ((track_scope and match_variable(Wi_name, track_scope))
-                #      or tf.compat.v1.get_variable("W%i" % i, (src_dim, tgt_dim),initializer = tf.compat.v1.random_normal_initializer(stddev = 0.3)))
-                #Wi = tf.Variable(tf.random.normal(shape=(src_dim, tgt_dim),stddev=0.5),name = Wi_name)
                 Wix = tf.Variable(tf.random.normal(shape =(src_dim, tgt_dim)), name =  Wi_name+"_x")
                 Wia = tf.Variable(tf.random.normal(shape =(src_dim, tgt_dim)), name =  Wi_name+"_a")
 
-                #Wi = tf.compat.v1.get_variable("W%i" % i, (src_dim, tgt_dim),initializer = tf.compat.v1.random_normal_initializer(stddev = 0.3))
                 x = tf.matmul(x, Wix)
                 a = tf.matmul(a, Wia)
 
                 bix = tf.Variable(np.zeros(shape = (tgt_dim,),dtype="float32"),name = bi_name+"_x")
                 bia = tf.Variable(np.zeros(shape = (tgt_dim,),dtype="float32"),name = bi_name+"_a")
-                #bi = ((track_scope and match_variable(bi_name, track_scope))
-                #    or tf.compat.v1.get_variable("b%i" % i, (tgt_dim,),initializer=tf.zeros_initializer))
                 x += bix
                 a += bia
 

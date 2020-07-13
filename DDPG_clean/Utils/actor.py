@@ -1,4 +1,3 @@
-#import tflearn
 import tensorflow as tf
 import numpy as np
 
@@ -25,8 +24,7 @@ class ActorNetwork(object):
         self.target_network_params = tf.compat.v1.trainable_variables()[
                                      len(self.network_params):]
 
-        # Op for periodically updating target network with online network
-        # weights
+        # Op for periodically updating target network with online network weights
         with tf.compat.v1.variable_scope("ActorRegu"):
             self.update_target_network_params = \
                 [self.target_network_params[i].assign(tf.multiply(self.network_params[i], self.tau) +
@@ -59,19 +57,13 @@ class ActorNetwork(object):
                 Wi_name, bi_name = "W" +str(i), "b"+str(i)
                 final_layer = i == len(layer_dims) - 2
 
-                #Wi = ((track_scope and match_variable(Wi_name, track_scope))
-                #      or tf.compat.v1.get_variable("W%i" % i, (src_dim, tgt_dim),initializer = tf.compat.v1.random_normal_initializer(stddev = 0.3)))
-                #Wi = tf.Variable(tf.random.normal(shape=(src_dim, tgt_dim),stddev=0.5),name = Wi_name)
                 if not final_layer:
                     Wi = tf.Variable(tf.random.normal(shape =(src_dim, tgt_dim)), name =  Wi_name)
                 else:
                     Wi = tf.Variable(np.float32(np.random.uniform(low=-0.003, high=0.003, size =(src_dim, tgt_dim))), name =  Wi_name)
-                #Wi = tf.compat.v1.get_variable("W%i" % i, (src_dim, tgt_dim),initializer = tf.compat.v1.random_normal_initializer(stddev = 0.3))
                 x = tf.matmul(x, Wi)
 
                 bi = tf.Variable(np.zeros(shape = (tgt_dim,),dtype="float32"),name = bi_name)
-                #bi = ((track_scope and match_variable(bi_name, track_scope))
-                #    or tf.compat.v1.get_variable("b%i" % i, (tgt_dim,),initializer=tf.zeros_initializer))
                 x += bi
 
                 if not final_layer:
