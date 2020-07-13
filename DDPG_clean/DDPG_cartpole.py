@@ -14,23 +14,28 @@ from Utils.noise import OUNoise
 from Utils.actor import ActorNetwork
 from Utils.critic import CriticNetwork
 from Utils.replay_buffer import ReplayBuffer
-import Continuous_CartPole
-from Continuous_CartPole import *
+import ENV.Continuous_CartPole
+from ENV.Continuous_CartPole import *
 
 
 
 def train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, ep):
 
-    sess.run(tf.compat.v1.global_variables_initializer())
+    #sess.run(tf.compat.v1.global_variables_initializer())
     if "--save" in sys.argv:
         saver = tf.compat.v1.train.Saver()
+        print("weights saved")
 
     if "--load" in sys.argv:
+        print("loading weights")
         loader = tf.compat.v1.train.Saver()
         arg_index = sys.argv.index("--load")
         save_name = sys.argv[arg_index + 1]
         loader.restore(sess,"savedir/"+save_name+"/save")
-        sess.run(tf.compat.v1.local_variables_initializer())
+        print("weights loaded")
+        #sess.run(tf.compat.v1.local_variables_initializer())
+    else:
+        sess.run(tf.compat.v1.global_variables_initializer())
 
     # Initialize target network weights
     actor.update_target_network()
@@ -158,6 +163,33 @@ if __name__ == '__main__':
         critic = CriticNetwork(sess, state_dim, action_dim, layers, critic_lr, tau, gamma, actor.get_num_trainable_vars())
         tf.compat.v1.summary.FileWriter("logdir/graphpend", graph=tf.compat.v1.get_default_graph())
 
-        scores = train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, ep)
-        plt.plot([i + 1 for i in range(0, ep, 3)], scores[::3])
-        plt.show()
+        print("\033[0;1;32m")
+        print("===================")
+        print("LE DEBUT")
+        print("===================")
+        if "--demo" in sys.argv:
+            if "--load" in sys.argv:
+                print("loading weights")
+                loader = tf.compat.v1.train.Saver()
+                arg_index = sys.argv.index("--load")
+                save_name = sys.argv[arg_index + 1]
+                loader.restore(sess,"savedir/"+save_name+"/save")
+                print("weights loaded")
+            else:
+                print("use --load with --demo")
+                quit()
+
+            while True:
+                state = env.reset()
+                for i in range(500):
+                    env.render()
+                    action = np.clip(actor.predict(np.reshape(state, (1, actor.s_dim))),-1,1)
+                    next_state, reward, done, info = env.step(action[0])
+                    state = next_state
+                    if done:
+                        break
+
+        else:
+            scores = train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, ep)
+            plt.plot([i + 1 for i in range(0, ep, 3)], scores[::3])
+            plt.show()

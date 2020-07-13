@@ -84,30 +84,6 @@ class ActorNetwork(object):
         return inputs, x, scaled_x
 
 
-
-        #W1 = tf.Variable(tf.random.normal(shape =(self.s_dim, 400)))
-        #net = tf.matmul(inputs, W1)
-        #b1 = tf.Variable(np.zeros(shape = (400,),dtype="float32"))
-        #net = net + b1
-        #net = tf.nn.relu(net)
-
-
-        #W2 = tf.Variable(tf.random.normal(shape=(400,300)))
-        #net = tf.matmul(net, W2)
-        #b2 = tf.Variable(np.zeros(shape =(300,),dtype="float32"))
-        #net = net + b2
-        #net = tf.nn.relu(net)
-
-
-        #W3 = tf.Variable(np.float32(np.random.uniform(low=-0.003, high=0.003,size =(300,self.a_dim))))
-        #out = tf.matmul(net,W3)
-        #b3 = tf.Variable(np.zeros(shape =(self.a_dim,),dtype="float32"))
-        #out = out + b3
-
-        ## Scale output to -action_bound to action_bound
-        #scaled_out = tf.nn.tanh(tf.multiply(out, self.action_bound))
-        #return inputs, out, scaled_out
-
     def train(self, inputs, a_gradient):
         self.sess.run(self.optimize, feed_dict={
             self.inputs: inputs,

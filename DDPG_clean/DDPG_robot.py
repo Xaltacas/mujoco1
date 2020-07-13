@@ -25,12 +25,14 @@ def train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, ep):
         saver = tf.compat.v1.train.Saver()
 
     if "--load" in sys.argv:
+        print("loading weights")
         loader = tf.compat.v1.train.Saver()
         arg_index = sys.argv.index("--load")
         save_name = sys.argv[arg_index + 1]
         loader.restore(sess,"savedir/"+save_name+"/save")
-        sess.run(tf.compat.v1.local_variables_initializer())
-
+        print("weights loaded")
+    else:
+        sess.run(tf.compat.v1.global_variables_initializer())
 
 
 
@@ -80,7 +82,7 @@ def train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, ep):
             if 'visu' in sys.argv:
                 env.render()
 
-            action = np.clip(actor.predict(np.reshape(state, (1, actor.s_dim))) + actor_noise()*explo,-1,1)
+            action = np.clip(actor.predict(np.reshape(state, (1, actor.s_dim))) + actor_noise()*explo* 0.1,-1,1)
 
             #print(action)
             next_state, reward, done, info = env.step(action.reshape(4,))
@@ -117,6 +119,10 @@ def train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, ep):
             score += reward
 
             tac = time.time()
+            print("\033[0;1;4;97m", end='')
+            print("Episode:", end = "")
+            print("\033[0;97m", end='')
+            print(" {}    ".format(i),end='')
             print("\033[3;4;91m", end='')
             print("temps total : {} secondes\r".format(int(tac - tic)), end='')
 
@@ -181,6 +187,29 @@ if __name__ == '__main__':
         print("LE DEBUT")
         print("===================")
 
-        scores = train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, ep)
-        plt.plot([i + 1 for i in range(0, ep, 3)], scores[::3])
-        plt.show()
+        if "--demo" in sys.argv:
+            if "--load" in sys.argv:
+                print("loading weights")
+                loader = tf.compat.v1.train.Saver()
+                arg_index = sys.argv.index("--load")
+                save_name = sys.argv[arg_index + 1]
+                loader.restore(sess,"savedir/"+save_name+"/save")
+                print("weights loaded")
+            else:
+                print("use --load with --demo")
+                quit()
+
+            while True:
+                state = env.reset()
+                for i in range(200):
+                    env.render()
+                    action = np.clip(actor.predict(np.reshape(np.concatenate([state["observation"],state["desired_goal"]]), (1, actor.s_dim)))+ actor_noise()*0.1,-1,1)
+                    next_state, reward, done, info = env.step(np.reshape(action,(4,)))
+                    state = next_state
+                    if done:
+                        break
+
+        else:
+            scores = train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, ep)
+            plt.plot([i + 1 for i in range(0, ep, 3)], scores[::3])
+            plt.show()

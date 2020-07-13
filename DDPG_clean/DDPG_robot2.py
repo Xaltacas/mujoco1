@@ -9,6 +9,7 @@ import time
 import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
+import compress_json
 
 from Utils.noise import OUNoise
 from Utils.actor import ActorNetwork
@@ -19,7 +20,7 @@ from ENV.custom_env import *
 
 def train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, ep):
 
-    sess.run(tf.compat.v1.global_variables_initializer())
+
     if "--save" in sys.argv:
         saver = tf.compat.v1.train.Saver()
 
@@ -28,7 +29,8 @@ def train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, ep):
         arg_index = sys.argv.index("--load")
         save_name = sys.argv[arg_index + 1]
         loader.restore(sess,"savedir/"+save_name+"/save")
-        sess.run(tf.compat.v1.local_variables_initializer())
+    else:
+        sess.run(tf.compat.v1.global_variables_initializer())
 
     # Initialize target network weights
     actor.update_target_network()
@@ -36,6 +38,18 @@ def train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, ep):
 
     # Initialize replay memory
     replay_buffer = ReplayBuffer(buffer_size, 0)
+
+    if "--loadBuff" in sys.argv:
+        arg_index = sys.argv.index("--loadBuff")
+        buffPath = sys.argv[arg_index + 1]
+        print("loading buffer")
+        tempBuff = compress_json.local_load("preTrain/"+buffPath+".json.gz")
+        nb = buffer_size / len(tempBuff["action"])
+        for i in range(int(nb)):
+            for s,a,r,d,s1 in zip(tempBuff["state"],tempBuff["action"],tempBuff["reward"],tempBuff["done"],tempBuff["next_state"]):
+                replay_buffer.add(np.reshape(s,(actor.s_dim,)),np.reshape(a,(actor.a_dim,)),r,d,np.reshape(s1,(actor.s_dim,)))
+
+        print("buffer loaded")
 
     max_episodes = ep
     max_steps = 200
@@ -111,7 +125,7 @@ def train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, ep):
 
         score_list.append(score)
 
-        if i % 10 == 0:
+        if i % 10 == 0 and i != 0:
             print("\033[0;1;4;97m", end='')
             print("Episode:", end = "")
             print("\033[0;97m", end='')
@@ -142,13 +156,13 @@ if __name__ == '__main__':
         tf.compat.v1.set_random_seed(0)
 
         ep = 10000
-        tau = 0.0001
+        tau = 0.001
         gamma = 0.99
         min_batch = 256
         actor_lr = 0.0001
         critic_lr = 0.001
-        buffer_size = 100000
-        layers = [800,600]
+        buffer_size = 1000000
+        layers = [2048,1024,512]
 
         state_dim =  env.observation_space["observation"].shape[0] + env.observation_space["desired_goal"].shape[0]
         action_dim = env.action_space.shape[0]
@@ -164,6 +178,28 @@ if __name__ == '__main__':
         print("LE DEBUT")
         print("===================")
 
-        scores = train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, ep)
-        plt.plot([i + 1 for i in range(0, ep, 3)], scores[::3])
-        plt.show()
+        if "--demo" in sys.argv:
+            if "--load" in sys.argv:
+                print("loading weights")
+                loader = tf.compat.v1.train.Saver()
+                arg_index = sys.argv.index("--load")
+                save_name = sys.argv[arg_index + 1]
+                loader.restore(sess,"savedir/"+save_name+"/save")
+                print("weights loaded")
+            else:
+                print("use --load with --demo")
+                quit()
+
+            while True:
+                state = env.reset()
+                for i in range(200):
+                    env.render()
+                    action = np.clip(actor.predict(np.reshape(np.concatenate([state["observation"],state["desired_goal"]]), (1, actor.s_dim))),-1,1)
+                    next_state, reward, done, info = env.step(np.reshape(action,(4,)))
+                    state = next_state
+                    if done:
+                        break
+        else:
+            scores = train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, ep)
+            plt.plot([i + 1 for i in range(0, ep, 3)], scores[::3])
+            plt.show()

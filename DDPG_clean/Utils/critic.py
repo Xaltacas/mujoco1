@@ -99,40 +99,6 @@ class CriticNetwork(object):
 
         return inputs, action, out
 
-
-        #W1 = tf.Variable(tf.random.normal(shape =(self.s_dim, 400)))
-        #net = tf.matmul(inputs, W1)
-        #b1 = tf.Variable(np.zeros(shape = (400,),dtype="float32"))
-        #net = net + b1
-        ##net = tflearn.layers.normalization.batch_normalization(net)
-        ##net = tflearn.activations.relu(net)
-        #net = tf.nn.relu(net)
-
-        ## Add the action tensor in the 2nd hidden layer
-        ## Use two temp layers to get the corresponding weights and biases
-        ##t1 = tflearn.fully_connected(net, 300)
-        #W2 = tf.Variable(tf.random.normal(shape =(400 , 300)))
-        #t1 = tf.matmul(net,W2)
-
-        ##t2 = tflearn.fully_connected(action, 300)
-        #W3 = tf.Variable(tf.random.normal(shape =(self.a_dim, 300)))
-        #t2 = tf.matmul(action,W3)
-        #b3 = tf.Variable(np.zeros(shape = (300,),dtype="float32"))
-        #t2 = t2 + b3
-
-        #net = tf.nn.relu(t1 + t2)
-
-        ## linear layer connected to 1 output representing Q(s,a)
-        ## Weights are init to Uniform[-3e-3, 3e-3]
-        ##w_init = tflearn.initializations.uniform(minval=-0.003, maxval=0.003)
-        ##out = tflearn.fully_connected(net, 1, weights_init=w_init)
-        #W4 = tf.Variable(np.float32(np.random.uniform(low=-0.003, high=0.003,size =(300,1))))
-        #out = tf.matmul(net,W4)
-        #b4 = tf.Variable(np.zeros(shape = (1,),dtype="float32"))
-        #out = out + b4
-
-        #return inputs, action, out
-
     def train(self, inputs, action, predicted_q_value):
         return self.sess.run([self.out, self.optimize], feed_dict={
             self.inputs: inputs,
