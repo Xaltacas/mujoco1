@@ -26,6 +26,8 @@ avec d la distance à la cible.
 ## Resolutions:
 ##### DDPG_robot:
 Résolution de custon_env  
+
+      
       arguments optionnels:  
 
       --save "nom"  
@@ -47,7 +49,9 @@ Résolution de Continuous_CartPole
 
 ### Outils de résolution:
 ##### preTrain_Datagen:
-Génère un buffer de "bonnes" actions pour la resolution de custom_env
+Génère un buffer de "bonnes" actions pour la resolution de custom_env.  
+
+
       argument obligatoire:
 
       --save "nom"  
@@ -59,7 +63,9 @@ Génère un buffer de "bonnes" actions pour la resolution de custom_env
             definis la taille du buffer créé
 
 ##### preTrain_fit
-Crée une sauvegarde du réseau entrainé de manière supervisée à partir d'un buffer donné
+Crée une sauvegarde du réseau entrainé de manière supervisée à partir d'un buffer donné.  
+
+
       arguments obligatoires:
 
       --save "nom"  
