@@ -79,3 +79,18 @@ Crée une sauvegarde du réseau entrainé de manière supervisée à partir d'un
 
       --loadBuff "nom"  
             charge une sauvegarde du buffer depuis le fichier "preTrain/nom.json.gz"
+
+### Observations:
+Le learning rate et tau doivent etre très bas pour avoir de la stabilité dans la convergence  
+Des paramètres qui ont l'air de marcher :  
+```
+ep = 10000
+tau = 0.0001
+gamma = 0.99
+min_batch = 32
+actor_lr = 0.00001
+critic_lr = 0.0001
+buffer_size = 1000000
+layers = [512,256]
+```
+(debut de convergence en 300 ep avec un réseau pré train)
