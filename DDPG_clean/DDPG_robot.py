@@ -165,11 +165,11 @@ if __name__ == '__main__':
         tf.compat.v1.set_random_seed(0)
 
         ep = 10000
-        tau = 0.001
+        tau = 0.0001
         gamma = 0.99
-        min_batch = 64
-        actor_lr = 0.0001
-        critic_lr = 0.001
+        min_batch = 32
+        actor_lr = 0.00001
+        critic_lr = 0.0001
         buffer_size = 1000000
         layers = [512,256]
 
