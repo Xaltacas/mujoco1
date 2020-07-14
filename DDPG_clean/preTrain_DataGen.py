@@ -22,7 +22,16 @@ if __name__ == '__main__':
     else:
         buff_max = 1000
 
-    buff = {"state":[],
+    if "--mstep" in sys.argv:
+        arg_index = sys.argv.index("--mstep")
+        micro_stepping = int(sys.argv[arg_index + 1])
+    else:
+        micro_stepping = 1
+
+
+    buff = {"size": buff_max,
+            "microstepping" : micro_stepping,
+            "state":[],
             "action":[],
             "reward":[],
             "done":[],
@@ -34,22 +43,33 @@ if __name__ == '__main__':
     nb_episode = 0
     tic = time.time()
     while buffer_size < buff_max:
-        state = env.reset()
+        obs_state = env.reset()
+        actor_noise.reset()
+        statelist = []
+        for h in range(micro_stepping):
+            statelist.append(np.concatenate([obs_state["observation"],obs_state["desired_goal"]]))
+        state = np.concatenate(statelist)
 
         step = 0
         done = False
         while step < 200 and not done and buffer_size < buff_max:
-            act = state["desired_goal"] - state["achieved_goal"]
+            act = obs_state["desired_goal"] - obs_state["achieved_goal"]
             act = act if np.linalg.norm(act) == 0 else (act/np.linalg.norm(act))* 0.3
             action = [act[0],act[1],act[2],0]
             prev_state = state
-            state, reward, done, info = env.step(action + actor_noise()*0.5)
+            statelist = []
+            for h in range(micro_stepping):
+                obs_state, reward, done, info = env.step(action + np.random.normal(size = (4))*0.2)
+                statelist.append(np.concatenate([obs_state["observation"],obs_state["desired_goal"]]))
+                if "--visu" in sys.argv:
+                    env.render()
+            state = np.concatenate(statelist)
 
-            buff["state"].append(np.concatenate([prev_state["observation"],prev_state["desired_goal"]]).tolist())
+            buff["state"    ].append(prev_state.tolist())
             buff["action"].append(action)
             buff["reward"].append(reward)
             buff["done"].append(bool(done))
-            buff["next_state"].append(np.concatenate([state["observation"],state["desired_goal"]]).tolist())
+            buff["next_state"].append(state.tolist())
 
             buffer_size +=1
             step +=1

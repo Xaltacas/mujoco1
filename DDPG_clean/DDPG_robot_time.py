@@ -13,7 +13,7 @@ from Utils.replay_buffer import ReplayBuffer
 from ENV.custom_env import *
 
 
-def train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, ep):
+def train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, micro_stepping, ep):
 
     sess.run(tf.compat.v1.global_variables_initializer())
     if "--save" in sys.argv:
@@ -60,11 +60,17 @@ def train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, ep):
 
     for i in range(max_episodes):
 
+        statelist = []
         state = env.reset()
         state = np.concatenate([state["observation"],state["desired_goal"]])
+        for h in range(micro_stepping):
+            statelist.append(state)
+
+        state = np.concatenate(statelist)
         score = 0
         cost = 0
         costs = []
+
         actor_noise.reset()
 
         if(i % 10 == 0):
@@ -81,8 +87,12 @@ def train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, ep):
             action = np.clip(actor.predict(np.reshape(state, (1, actor.s_dim))) + actor_noise()*explo* 0.1,-1,1)
 
             #print(action)
-            next_state, reward, done, info = env.step(action.reshape(4,))
-            next_state = np.concatenate([next_state["observation"],next_state["desired_goal"]])
+            next_state = []
+            for k in range(micro_stepping):
+                obs_state, reward, done, info = env.step(action.reshape(actor.a_dim,))
+                obs_state = np.concatenate([obs_state["observation"],obs_state["desired_goal"]])
+                next_state.append(obs_state)
+            next_state = np.concatenate(next_state)
             replay_buffer.add(np.reshape(state, (actor.s_dim,)), np.reshape(action, (actor.a_dim,)), reward,
                               done, np.reshape(next_state, (actor.s_dim,)))
 
@@ -167,9 +177,10 @@ if __name__ == '__main__':
         actor_lr = 0.00001
         critic_lr = 0.0001
         buffer_size = 1000000
+        micro_stepping = 3 #nombre de steps pour chaque action sample
         layers = [512,256]
 
-        state_dim =  env.observation_space["observation"].shape[0] + env.observation_space["desired_goal"].shape[0]
+        state_dim =  (env.observation_space["observation"].shape[0] + env.observation_space["desired_goal"].shape[0]) * micro_stepping
         action_dim = env.action_space.shape[0]
         action_bound = env.action_space.high
 
@@ -196,16 +207,27 @@ if __name__ == '__main__':
                 quit()
 
             while True:
+                statelist = []
                 state = env.reset()
+                state = np.concatenate([state["observation"],state["desired_goal"]])
+                for h in range(micro_stepping):
+                    statelist.append(state)
+                state = np.concatenate(statelist)
+
                 for i in range(200):
                     env.render()
-                    action = np.clip(actor.predict(np.reshape(np.concatenate([state["observation"],state["desired_goal"]]), (1, actor.s_dim))),-1,1)
-                    next_state, reward, done, info = env.step(np.reshape(action,(4,)))
+                    action = np.clip(actor.predict(np.reshape(state, (1, actor.s_dim))),-1,1)
+                    next_state = []
+                    for k in range(micro_stepping):
+                        obs_state, reward, done, info = env.step(action.reshape(actor.a_dim,))
+                        obs_state = np.concatenate([obs_state["observation"],obs_state["desired_goal"]])
+                        next_state.append(obs_state)
+                    next_state = np.concatenate(next_state)
                     state = next_state
                     if done:
                         break
 
         else:
-            scores = train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, ep)
+            scores = train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, micro_stepping, ep)
             plt.plot([i + 1 for i in range(0, ep, 3)], scores[::3])
             plt.show()

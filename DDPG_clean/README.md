@@ -9,16 +9,16 @@ Code fortement inspiré de [ce Depot](https://github.com/shivaverma/OpenAIGym/)
 #### Continuous_CartPole :
 le cartpole de gym en continu;  
 reward policy: `-(theta**2 + 0.1*theta_dot**2 + x**2 + 0.1*x**2) + 1`
-avec theta l'angle du baton et x la position du cart.  
+avec theta l'angle du bâton et x la position du cart.  
 
 
 #### LunarLanderContinuous :
 Lunar lander de base de gym;  
-pas d'alteration.  
+pas d'altération.  
 
 
 #### custom_env :
-le fetch de mujoco custon;   
+le fetch de mujoco custom;   
 reward policy: `-1 -d*d + (done) * 10`
 avec d la distance à la cible.  
 (exploite les env custom_fetchEnv et custom_robotEnv)
@@ -43,7 +43,7 @@ Résolution de custon_env
       --demo  
             visualisation avec que du tryhard, doit etre fait avec --load
 
-      visu  
+      --visu  
             visualisation de l'entrainement
 
 ##### DDPG_lunarLander
@@ -75,13 +75,13 @@ Crée une sauvegarde du réseau entrainé de manière supervisée à partir d'un
       arguments obligatoires:
 
       --save "nom"  
-            crée une sauvegarde du reseau dans le dossier "savedir/nom/"  
+            crée une sauvegarde du réseau dans le dossier "savedir/nom/"  
 
       --loadBuff "nom"  
             charge une sauvegarde du buffer depuis le fichier "preTrain/nom.json.gz"
 
 ### Observations:
-Le learning rate et tau doivent etre très bas pour avoir de la stabilité dans la convergence  
+Le learning rate et tau doivent être très bas pour avoir de la stabilité dans la convergence  
 Des paramètres qui ont l'air de marcher :  
 ```
 ep = 10000
@@ -93,4 +93,6 @@ critic_lr = 0.0001
 buffer_size = 1000000
 layers = [512,256]
 ```
-(debut de convergence en 300 ep avec un réseau pré train)
+(d2but de convergence en 300 ep avec un réseau pré train)
+
+le réseau a tendance à diverger quelques centaines d'épisodes après avoir convergé...

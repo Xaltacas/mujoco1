@@ -37,7 +37,18 @@ def main():
 
         env = customEnv()
 
-        ep = 100
+        if "--mstep" in sys.argv:
+            arg_index = sys.argv.index("--mstep")
+            micro_stepping = int(sys.argv[arg_index + 1])
+        else:
+            micro_stepping = 1
+
+        if "--ep" in sys.argv:
+            arg_index = sys.argv.index("--ep")
+            ep = int(sys.argv[arg_index + 1])
+        else:
+            ep = 10000
+
         tau = 0.001
         gamma = 0.99
         min_batch = 64
@@ -46,7 +57,7 @@ def main():
         buffer_size = 1000000
         layers = [512,256]
 
-        state_dim =  env.observation_space["observation"].shape[0] + env.observation_space["desired_goal"].shape[0]
+        state_dim =  (env.observation_space["observation"].shape[0] + env.observation_space["desired_goal"].shape[0])*micro_stepping
         action_dim = env.action_space.shape[0]
         action_bound = env.action_space.high
 

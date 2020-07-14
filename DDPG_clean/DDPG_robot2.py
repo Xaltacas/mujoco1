@@ -66,6 +66,8 @@ def train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, ep):
         cost = 0
         costs = []
 
+        actor_noise.reset()
+
         if(i % 10 == 0):
             #print("serious:")
             explo=0
@@ -74,10 +76,10 @@ def train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, ep):
 
         for j in range(max_steps):
 
-            if 'visu' in sys.argv:
+            if '--visu' in sys.argv:
                 env.render()
 
-            action = np.clip(actor.predict(np.reshape(state, (1, actor.s_dim))) + actor_noise()*explo,-1,1)
+            action = np.clip(actor.predict(np.reshape(state, (1, actor.s_dim)))*(1-(explo*0.5)) + actor_noise()*explo,-1,1)
 
             #print(action)
             next_state, reward, done, info = env.step(action[0])
@@ -156,13 +158,13 @@ if __name__ == '__main__':
         tf.compat.v1.set_random_seed(0)
 
         ep = 10000
-        tau = 0.001
+        tau = 0.0001
         gamma = 0.99
-        min_batch = 256
-        actor_lr = 0.0001
-        critic_lr = 0.001
-        buffer_size = 1000000
-        layers = [2048,1024,512]
+        min_batch = 32
+        actor_lr = 0.00001
+        critic_lr = 0.0001
+        buffer_size = 100000
+        layers = [512,256]
 
         state_dim =  env.observation_space["observation"].shape[0] + env.observation_space["desired_goal"].shape[0]
         action_dim = env.action_space.shape[0]
