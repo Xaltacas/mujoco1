@@ -149,7 +149,6 @@ class FetchEnv(ENV.custom_robotEnv.RobotEnv):
 
     def _reset_sim(self):
         self.sim.set_state(self.initial_state)
-
         # Randomize start position of object.
         if self.has_object:
             object_xpos = self.initial_gripper_xpos[:2]
@@ -174,6 +173,7 @@ class FetchEnv(ENV.custom_robotEnv.RobotEnv):
                 goal[2] += self.np_random.uniform(0, 0.45)
         else:
             goal = self.initial_gripper_xpos[:3] + self.np_random.uniform(-self.target_range, self.target_range, size=3)
+            goal[2] = 0.43
         return goal.copy()
 
     def _is_success(self, achieved_goal, desired_goal):

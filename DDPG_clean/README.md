@@ -27,32 +27,31 @@ avec d la distance à la cible.
 #### DDPG_robot:
 Résolution de custon_env  
 
-
-      arguments optionnels:  
-
-      --save "nom"  
-            crée une sauvegarde du réseau dans le dossier "savedir/nom/"  
-
-      --load "nom"  
-            charge une sauvegarde du réseau depuis le dossier "savedir/nom/"  
-            ATTENTION !! la taille du réseau chargé et celui déclaré dans DDPG_robot doivent correspondre.  
-
-      --loadBuff "nom"  
-            charge une sauvegarde de buffer depuis le fichier "preTrain/nom.json.gz"
-
-      --demo  
-            visualisation avec que du tryhard, doit etre fait avec --load
-
-      --visu  
-            visualisation de l'entrainement
-
-##### DDPG_lunarLander
+#### DDPG_lunarLander
 Résolution de lunarLanderContinuous  
 
 
-##### DDPG_Cartpole
+#### DDPG_Cartpole
 Résolution de Continuous_CartPole  
 
+##### Tous ces programmes peuvent être éxecutés avec les argument suivants:
+
+--save "nom"  
+      crée une sauvegarde du réseau dans le dossier "savedir/nom/"  
+
+--load "nom"  
+      charge une sauvegarde du réseau depuis le dossier "savedir/nom/"  
+      ATTENTION !! la taille du réseau chargé et celui déclaré dans DDPG_robot doivent correspondre.  
+
+--loadBuff "nom"  
+      charge une sauvegarde de buffer depuis le fichier "preTrain/nom.json.gz"
+
+--demo  
+      visualisation avec que du tryhard, doit etre fait avec --load
+
+--visu  
+      visualisation de l'entrainement
+            
 ### Outils de résolution:
 #### preTrain_Datagen:
 Génère un buffer de "bonnes" actions pour la resolution de custom_env.  
@@ -63,10 +62,13 @@ Génère un buffer de "bonnes" actions pour la resolution de custom_env.
       --save "nom"  
             crée une sauvegarde du buffer dans le fichier "preTrain/nom.json.gz"  
 
-      optionnel:  
+      optionnels:  
 
       --size "taille"
             définis la taille du buffer créé
+
+      --mstep "nb"
+            definis le nombre de step dans la simulation par action
 
 #### preTrain_fit
 Crée une sauvegarde du réseau entrainé de manière supervisée à partir d'un buffer donné.  
@@ -79,6 +81,16 @@ Crée une sauvegarde du réseau entrainé de manière supervisée à partir d'un
 
       --loadBuff "nom"  
             charge une sauvegarde du buffer depuis le fichier "preTrain/nom.json.gz"
+
+      optionnels:
+
+      --mstep "nb"
+            definis le nombre de step dans la simulation par   
+            default : 1
+
+      --ep "nb"
+            definis le nombre d'episode sur lesquels le reseau sera entrainé  
+            default : 10000
 
 ### Observations:
 Le learning rate et tau doivent être très bas pour avoir de la stabilité dans la convergence  
@@ -96,3 +108,11 @@ layers = [512,256]
 (d2but de convergence en 300 ep avec un réseau pré train)
 
 le réseau a tendance à diverger quelques centaines d'épisodes après avoir convergé...
+
+---
+
+### Requirements
+
+- **`python`** - `3.7`
+- **`tensorflow`** -  `2.2.0`
+- **`MuJoCo`** -

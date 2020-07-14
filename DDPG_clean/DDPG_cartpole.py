@@ -52,6 +52,7 @@ def train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, ep):
         cost = 0
         costs = []
         steps = 0
+        actor_noise.reset()
 
         #one serious run every 10 run
         if(i % 10 == 0):
@@ -61,7 +62,7 @@ def train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, ep):
 
         for j in range(max_steps):
 
-            if 'visu' in sys.argv:
+            if '--visu' in sys.argv:
                 env.render()
 
             action = np.clip(actor.predict(np.reshape(state, (1, actor.s_dim))) + actor_noise()*explo,-1,1)

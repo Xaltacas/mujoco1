@@ -163,7 +163,7 @@ if __name__ == '__main__':
         min_batch = 32
         actor_lr = 0.00001
         critic_lr = 0.0001
-        buffer_size = 100000
+        buffer_size = 1000000
         layers = [512,256]
 
         state_dim =  env.observation_space["observation"].shape[0] + env.observation_space["desired_goal"].shape[0]

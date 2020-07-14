@@ -15,7 +15,6 @@ from ENV.custom_env import *
 
 def train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, ep):
 
-    sess.run(tf.compat.v1.global_variables_initializer())
     if "--save" in sys.argv:
         saver = tf.compat.v1.train.Saver()
 
@@ -28,8 +27,6 @@ def train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, ep):
         print("weights loaded")
     else:
         sess.run(tf.compat.v1.global_variables_initializer())
-
-
 
     # Initialize target network weights
     actor.update_target_network()
@@ -78,7 +75,7 @@ def train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, ep):
             if '--visu' in sys.argv:
                 env.render()
 
-            action = np.clip(actor.predict(np.reshape(state, (1, actor.s_dim))) + actor_noise()*explo* 0.1,-1,1)
+            action = np.clip(actor.predict(np.reshape(state, (1, actor.s_dim))) + actor_noise()*explo,-1,1)
 
             #print(action)
             next_state, reward, done, info = env.step(action.reshape(4,))

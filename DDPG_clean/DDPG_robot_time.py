@@ -15,9 +15,11 @@ from ENV.custom_env import *
 
 def train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, micro_stepping, ep):
 
-    sess.run(tf.compat.v1.global_variables_initializer())
     if "--save" in sys.argv:
         saver = tf.compat.v1.train.Saver()
+        arg_index = sys.argv.index("--save")
+        save_name = sys.argv[arg_index + 1]
+        print("weights saved at " + save_name)
 
     if "--load" in sys.argv:
         print("loading weights")
@@ -84,7 +86,7 @@ def train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, micro_s
             if '--visu' in sys.argv:
                 env.render()
 
-            action = np.clip(actor.predict(np.reshape(state, (1, actor.s_dim))) + actor_noise()*explo* 0.1,-1,1)
+            action = np.clip(actor.predict(np.reshape(state, (1, actor.s_dim))) + actor_noise()*explo,-1,1)
 
             #print(action)
             next_state = []
@@ -95,6 +97,9 @@ def train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, micro_s
             next_state = np.concatenate(next_state)
             replay_buffer.add(np.reshape(state, (actor.s_dim,)), np.reshape(action, (actor.a_dim,)), reward,
                               done, np.reshape(next_state, (actor.s_dim,)))
+
+            state = next_state
+            score += reward
 
             # updating the network in batch
             if replay_buffer.size() < min_batch:
@@ -121,8 +126,7 @@ def train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, micro_s
             actor.update_target_network()
             critic.update_target_network()
 
-            state = next_state
-            score += reward
+
 
             tac = time.time()
             print("\033[0;1;4;97m", end='')
@@ -166,9 +170,9 @@ if __name__ == '__main__':
 
         env = customEnv()
 
-        env.seed(0)
-        np.random.seed(0)
-        tf.compat.v1.set_random_seed(0)
+        #env.seed(0)
+        #np.random.seed(0)
+        #tf.compat.v1.set_random_seed(0)
 
         ep = 10000
         tau = 0.0001
