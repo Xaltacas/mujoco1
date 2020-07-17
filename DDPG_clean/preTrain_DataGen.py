@@ -64,8 +64,8 @@ if __name__ == '__main__':
                 if "--visu" in sys.argv:
                     env.render()
             state = np.concatenate(statelist)
-
-            buff["state"    ].append(prev_state.tolist())
+            
+            buff["state"].append(prev_state.tolist())
             buff["action"].append(action)
             buff["reward"].append(reward)
             buff["done"].append(bool(done))

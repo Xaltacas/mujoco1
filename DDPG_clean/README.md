@@ -34,8 +34,8 @@ Résolution de lunarLanderContinuous
 #### DDPG_Cartpole
 Résolution de Continuous_CartPole  
 
-##### Tous ces programmes peuvent être éxecutés avec les argument suivants:
-
+##### Toutes les resolutions peuvent être éxecutés avec les argument suivants:
+```
 --save "nom"  
       crée une sauvegarde du réseau dans le dossier "savedir/nom/"  
 
@@ -51,7 +51,8 @@ Résolution de Continuous_CartPole
 
 --visu  
       visualisation de l'entrainement
-            
+```
+
 ### Outils de résolution:
 #### preTrain_Datagen:
 Génère un buffer de "bonnes" actions pour la resolution de custom_env.  
@@ -92,7 +93,7 @@ Crée une sauvegarde du réseau entrainé de manière supervisée à partir d'un
             definis le nombre d'episode sur lesquels le reseau sera entrainé  
             default : 10000
 
-### Observations:
+### Observations sur fetch:
 Le learning rate et tau doivent être très bas pour avoir de la stabilité dans la convergence  
 Des paramètres qui ont l'air de marcher :  
 ```
@@ -105,9 +106,12 @@ critic_lr = 0.0001
 buffer_size = 1000000
 layers = [512,256]
 ```
-(d2but de convergence en 300 ep avec un réseau pré train)
+~~(début de convergence en 300 ep avec un réseau pré train)~~
+la convergence est toujours random c'est chiant
 
 le réseau a tendance à diverger quelques centaines d'épisodes après avoir convergé...
+
+Les gros réseau ont l'air de converger au bout d'un temps (prometteur:[1024,512]) 
 
 ---
 

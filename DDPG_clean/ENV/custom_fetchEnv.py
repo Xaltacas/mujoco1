@@ -42,6 +42,7 @@ class FetchEnv(ENV.custom_robotEnv.RobotEnv):
         self.target_range = target_range
         self.distance_threshold = distance_threshold
         self.reward_type = reward_type
+        self.max_dist = 0.5
 
         super(FetchEnv, self).__init__(
             model_path=model_path, n_substeps=n_substeps, n_actions=4,
@@ -53,20 +54,13 @@ class FetchEnv(ENV.custom_robotEnv.RobotEnv):
     def compute_reward(self, achieved_goal, goal, info):
         # Compute distance between goal and the achieved goal.
         d = goal_distance(achieved_goal, goal)
-        reward = -1 - d*d + (d < self.distance_threshold)*10
-        #if d > self.previousD:
-        #    reward -= 1.
-        #else:
-        #    reward += 1.
+        stepping =  - 100*d + (d < self.distance_threshold)*50 - (d > self.max_dist)*300
+        if (self.previousS == None):
+            self.previousS = stepping
+
+        reward = stepping - self.previousS
         self.previousD = d
-        #return reward
-        #if self.reward_type == 'sparse':
-        #    return -(d > self.distance_threshold).astype(np.float32) *10
-        #else:
-        #    if d > 0.5:
-        #        return -d * 100;
-        #    else:
-        #        return -d * 10
+        self.previousS = stepping
         return reward
 
     # RobotEnv methods
@@ -149,6 +143,8 @@ class FetchEnv(ENV.custom_robotEnv.RobotEnv):
 
     def _reset_sim(self):
         self.sim.set_state(self.initial_state)
+        self.previousD = 0
+        self.previousS = None
         # Randomize start position of object.
         if self.has_object:
             object_xpos = self.initial_gripper_xpos[:2]
@@ -178,14 +174,13 @@ class FetchEnv(ENV.custom_robotEnv.RobotEnv):
 
     def _is_success(self, achieved_goal, desired_goal):
         d = goal_distance(achieved_goal, desired_goal)
-        return (d < self.distance_threshold)#.astype(np.float32)
+        return (d < self.distance_threshold) or (d > self.max_dist)#.astype(np.float32)
 
     def _env_setup(self, initial_qpos):
         for name, value in initial_qpos.items():
             self.sim.data.set_joint_qpos(name, value)
         utils.reset_mocap_welds(self.sim)
         self.sim.forward()
-        self.previousD = 0
         # Move end effector into position.
         gripper_target = np.array([-0.498, 0.005, -0.431 + self.gripper_extra_height]) + self.sim.data.get_site_xpos('robot0:grip')
         gripper_rotation = np.array([1., 0., 1., 0.])

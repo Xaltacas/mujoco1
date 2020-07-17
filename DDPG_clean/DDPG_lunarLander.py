@@ -146,10 +146,10 @@ if __name__ == '__main__':
         tau = 0.001
         gamma = 0.99
         min_batch = 64
-        actor_lr = 0.0001
-        critic_lr = 0.001
+        actor_lr = 0.00005
+        critic_lr = 0.0005
         buffer_size = 1000000
-        layers = [400,300]
+        layers = [400,200]
 
         state_dim = env.observation_space.shape[0]
         action_dim = env.action_space.shape[0]

@@ -55,7 +55,7 @@ def main():
         actor_lr = 0.0001
         critic_lr = 0.001
         buffer_size = 1000000
-        layers = [512,256]
+        layers = [1024,512]
 
         state_dim =  (env.observation_space["observation"].shape[0] + env.observation_space["desired_goal"].shape[0])*micro_stepping
         action_dim = env.action_space.shape[0]
