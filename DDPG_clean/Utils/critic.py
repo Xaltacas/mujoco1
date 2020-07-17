@@ -65,8 +65,8 @@ class CriticNetwork(object):
                 x = tf.nn.relu(x)
                 a = tf.nn.relu(a)
 
-                Wix = tf.Variable(tf.random.normal(shape =(src_dim, tgt_dim)), name =  Wi_name+"_x")
-                Wia = tf.Variable(tf.random.normal(shape =(src_dim, tgt_dim)), name =  Wi_name+"_a")
+                Wix = tf.Variable(np.float32(np.random.uniform(low=-0.003, high=0.003, size =(src_dim, tgt_dim))), name =  Wi_name+"_x")
+                Wia = tf.Variable(np.float32(np.random.uniform(low=-0.003, high=0.003, size =(src_dim, tgt_dim))), name =  Wi_name+"_a")
 
                 x = tf.matmul(x, Wix)
                 a = tf.matmul(a, Wia)

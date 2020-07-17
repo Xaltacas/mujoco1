@@ -55,7 +55,7 @@ def main():
         actor_lr = 0.0001
         critic_lr = 0.001
         buffer_size = 1000000
-        layers = [1024,512]
+        layers = [300]
 
         state_dim =  (env.observation_space["observation"].shape[0] + env.observation_space["desired_goal"].shape[0])*micro_stepping
         action_dim = env.action_space.shape[0]
@@ -94,6 +94,7 @@ def main():
 
         i = 0
         while i < ep:
+            i += 1
             states, actions, rewards = sample(buffer,min_batch)
 
             sess.run(actor_train,{actor.inputs: states, action_wanted: actions})
@@ -106,7 +107,7 @@ def main():
             print("\033[3;91m", end='')
             print("{} secondes".format(int(tac - tic)), end='')
             print("\033[0;m                  \r", end='')
-            i += 1
+
 
         sess.run(update_target_network_actor)
         sess.run(update_target_network_critic)

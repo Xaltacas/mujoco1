@@ -57,10 +57,13 @@ class ActorNetwork(object):
                 Wi_name, bi_name = "W" +str(i), "b"+str(i)
                 final_layer = i == len(layer_dims) - 2
 
-                if not final_layer:
-                    Wi = tf.Variable(tf.random.normal(shape =(src_dim, tgt_dim)), name =  Wi_name)
-                else:
-                    Wi = tf.Variable(np.float32(np.random.uniform(low=-0.003, high=0.003, size =(src_dim, tgt_dim))), name =  Wi_name)
+                #if not final_layer:
+                #    Wi = tf.Variable(tf.random.normal(shape =(src_dim, tgt_dim)), name =  Wi_name)
+                #else:
+                #    Wi = tf.Variable(np.float32(np.random.uniform(low=-0.003, high=0.003, size =(src_dim, tgt_dim))), name =  Wi_name)
+
+                Wi = tf.Variable(np.float32(np.random.uniform(low=-0.003, high=0.003, size =(src_dim, tgt_dim))), name =  Wi_name)
+
                 x = tf.matmul(x, Wi)
 
                 bi = tf.Variable(np.zeros(shape = (tgt_dim,),dtype="float32"),name = bi_name)

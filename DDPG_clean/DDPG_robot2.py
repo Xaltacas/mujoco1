@@ -24,13 +24,13 @@ def train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, ep):
     if "--save" in sys.argv:
         saver = tf.compat.v1.train.Saver()
 
-    if "--load" in sys.argv:
-        loader = tf.compat.v1.train.Saver()
-        arg_index = sys.argv.index("--load")
-        save_name = sys.argv[arg_index + 1]
-        loader.restore(sess,"savedir/"+save_name+"/save")
-    else:
-        sess.run(tf.compat.v1.global_variables_initializer())
+    #if "--load" in sys.argv:
+    #    loader = tf.compat.v1.train.Saver()
+    #    arg_index = sys.argv.index("--load")
+    #    save_name = sys.argv[arg_index + 1]
+    #    loader.restore(sess,"savedir/"+save_name+"/save")
+    #else:
+    #    sess.run(tf.compat.v1.global_variables_initializer())
 
     # Initialize target network weights
     actor.update_target_network()
@@ -79,7 +79,7 @@ def train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, ep):
             if '--visu' in sys.argv:
                 env.render()
 
-            action = np.clip(actor.predict(np.reshape(state, (1, actor.s_dim)))*(1-(explo*0.5)) + actor_noise()*explo,-1,1)
+            action = np.clip(actor.predict(np.reshape(state, (1, actor.s_dim))) + actor_noise()*explo*0.5,-1,1)
 
             #print(action)
             next_state, reward, done, info = env.step(action[0])
@@ -87,8 +87,18 @@ def train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, ep):
             replay_buffer.add(np.reshape(state, (actor.s_dim,)), np.reshape(action, (actor.a_dim,)), reward,
                               done, np.reshape(next_state, (actor.s_dim,)))
 
+            state = next_state
+            score += reward
+
+            tac = time.time()
+            print("\033[3;4;91m", end='')
+            print("temps total : {} secondes\r".format(int(tac - tic)), end='')
+
+
             # updating the network in batch
-            if replay_buffer.size() < min_batch:
+            if replay_buffer.size() < 10000:
+                if done:
+                    break
                 continue
 
             states, actions, rewards, dones, next_states = replay_buffer.sample_batch(min_batch)
@@ -112,17 +122,15 @@ def train(sess, env, actor, critic, actor_noise, buffer_size, min_batch, ep):
             actor.update_target_network()
             critic.update_target_network()
 
-            state = next_state
-            score += reward
-
-            tac = time.time()
-            print("\033[3;4;91m", end='')
-            print("temps total : {} secondes\r".format(int(tac - tic)), end='')
 
             if done:
                 break
 
-        tcost = np.mean(costs)
+        if len(costs) > 0:
+            tcost = np.mean(costs)
+        else:
+            tcost = 0.
+
         tcostlist.append(tcost)
 
         score_list.append(score)
@@ -164,7 +172,7 @@ if __name__ == '__main__':
         actor_lr = 0.00001
         critic_lr = 0.0001
         buffer_size = 100000
-        layers = [4096,2048,1024]
+        layers = [300]
 
         state_dim =  env.observation_space["observation"].shape[0] + env.observation_space["desired_goal"].shape[0]
         action_dim = env.action_space.shape[0]
@@ -173,22 +181,25 @@ if __name__ == '__main__':
         actor_noise = OUNoise(mu=np.zeros(action_dim))
         actor = ActorNetwork(sess, state_dim, action_dim, action_bound, layers, actor_lr, tau, min_batch)
         critic = CriticNetwork(sess, state_dim, action_dim, layers, critic_lr, tau, gamma, actor.get_num_trainable_vars())
-        tf.compat.v1.summary.FileWriter("logdir/graphpend", graph=tf.compat.v1.get_default_graph())
+        #tf.compat.v1.summary.FileWriter("logdir/graphpend", graph=tf.compat.v1.get_default_graph())
 
         print("\033[0;1;32m")
         print("===================")
         print("LE DEBUT")
         print("===================")
 
+        if "--load" in sys.argv:
+            print("loading weights")
+            loader = tf.compat.v1.train.Saver()
+            arg_index = sys.argv.index("--load")
+            save_name = sys.argv[arg_index + 1]
+            loader.restore(sess,"savedir/"+save_name+"/save")
+            print("weights loaded")
+        else:
+            sess.run(tf.compat.v1.global_variables_initializer())
+
         if "--demo" in sys.argv:
-            if "--load" in sys.argv:
-                print("loading weights")
-                loader = tf.compat.v1.train.Saver()
-                arg_index = sys.argv.index("--load")
-                save_name = sys.argv[arg_index + 1]
-                loader.restore(sess,"savedir/"+save_name+"/save")
-                print("weights loaded")
-            else:
+            if not "--load" in sys.argv:
                 print("use --load with --demo")
                 quit()
 

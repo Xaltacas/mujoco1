@@ -149,7 +149,7 @@ if __name__ == '__main__':
         actor_lr = 0.00005
         critic_lr = 0.0005
         buffer_size = 1000000
-        layers = [400,200]
+        layers = [300]
 
         state_dim = env.observation_space.shape[0]
         action_dim = env.action_space.shape[0]

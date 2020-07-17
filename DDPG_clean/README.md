@@ -111,7 +111,11 @@ la convergence est toujours random c'est chiant
 
 le réseau a tendance à diverger quelques centaines d'épisodes après avoir convergé...
 
-Les gros réseau ont l'air de converger au bout d'un temps (prometteur:[1024,512]) 
+~~Les gros réseau ont l'air de converger au bout d'un temps (prometteur:[1024,512])~~  
+Les gros overfit ou ne convergent jamais... les petit sont sans doute mieux
+
+La plupart des network ont l'air de tomber dans un minima local avec le bras en pleine extension a l'avant...  
+_(corriger ca avec la RewardPolicy?)_
 
 ---
 

@@ -1,3 +1,13 @@
+"""
+test pour pré fit un modèle en scriptant l'action effectué
+a pas l'air de marcher...
+les papiers disent que montrer que des bonnes action est pas top
+donc ca diverge dés qu'on quitte le script et laisse le modèle choisr
+"""
+
+
+
+
 import gym
 import sys
 import time
