@@ -117,6 +117,10 @@ Les gros overfit ou ne convergent jamais... les petit sont sans doute mieux
 La plupart des network ont l'air de tomber dans un minima local avec le bras en pleine extension a l'avant...  
 _(corriger ca avec la RewardPolicy?)_
 
+a implementer? [le bruit d'explo, ainsi que plusieurs autre idée dans ce papier](https://openreview.net/pdf?id=HyxnH64KwS)  
+
+a lire : [ce papier](https://arxiv.org/pdf/1909.12397.pdf)
+(mieux que tout le reste mais ne donne pas son network?)
 ---
 
 ### Requirements
