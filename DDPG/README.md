@@ -114,15 +114,17 @@ le réseau a tendance à diverger quelques centaines d'épisodes après avoir co
 ~~Les gros réseau ont l'air de converger au bout d'un temps (prometteur:[1024,512])~~  
 Les gros overfit ou ne convergent jamais... les petit sont sans doute mieux
 
-La plupart des network ont l'air de tomber dans un minima local avec le bras en pleine extension a l'avant...  
+La plupart des network ont l'air de tomber dans un minima local avec le bras en pleine extension à l'avant...  
 _(corriger ca avec la RewardPolicy?)_
 
-a implementer? [le bruit d'explo, ainsi que plusieurs autre idée dans ce papier](https://openreview.net/pdf?id=HyxnH64KwS)  
+~~à implémenter? [le bruit d'explo, ainsi que plusieurs autre idée dans ce papier](https://openreview.net/pdf?id=HyxnH64KwS)~
 
 a lire : [ce papier](https://arxiv.org/pdf/1909.12397.pdf)
-(mieux que tout le reste mais ne donne pas son network?)
----
+(mieux que tout le reste mais ne donne pas son network?)  
 
+au vu des résultats du NAF, ya un truc de pas net dans cette implémentation...  
+Potentiellement la batch normalization qui est nécéssaire, sinon une erreur au pif au milieu de mon code...
+---
 ### Requirements
 
 - **`python`** - `3.7`

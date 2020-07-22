@@ -54,7 +54,7 @@ class FetchEnv(ENV.custom_robotEnv.RobotEnv):
     def compute_reward(self, achieved_goal, goal, info):
         # Compute distance between goal and the achieved goal.
         d = goal_distance(achieved_goal, goal)
-        stepping =  - 100*d + (d < self.distance_threshold)*50 - (d > self.max_dist)*300 + (self.previousD - d)**2
+        stepping =  - 100*d + (d < self.distance_threshold)*100 - (d > self.max_dist)*300
         if (self.previousS == None):
             self.previousS = stepping
 

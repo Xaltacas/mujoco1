@@ -291,8 +291,10 @@ def run(frames=100000):
         state = env.reset()
         state = np.concatenate([state["observation"],state["desired_goal"]])
         score = 0
+        steps = 0
 
         for j in range(max_steps):
+            steps = j
 
             if '--visu' in sys.argv:
                 env.render()
@@ -325,7 +327,7 @@ def run(frames=100000):
             print("Episode:", end = "")
             print("\033[0;97m", end='')
             print(" {}                                             ".format(i))
-            print("total reward: {:.5}  avg reward (last 10): {:.5}".format(score,np.mean(score_list[max(0, i-10):(i+1)])))
+            print("steps: {}    total reward: {:.5}  avg reward (last 10): {:.5}".format(steps,score,np.mean(score_list[max(0, i-10):(i+1)])))
 
     return np.mean(score_list[-100:])
 
