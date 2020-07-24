@@ -6,7 +6,7 @@
 
 #### NAF :
 [le papier](https://arxiv.org/pdf/1603.00748.pdf)  
-[le dépot](https://github.com/axnedergaard/normalized-advantage-functions)  
+[un dépot](https://github.com/axnedergaard/normalized-advantage-functions)  
 [un autre depot](https://github.com/BY571/Normalized-Advantage-Function-NAF-)  
 
 ## autres tests
