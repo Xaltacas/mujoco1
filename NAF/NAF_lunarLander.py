@@ -6,6 +6,7 @@ import numpy as np
 import torch.optim as optim
 from torch.utils.tensorboard import SummaryWriter
 from ENV.lunarLanderContinuous import LunarLanderContinuous
+from datetime import datetime
 
 from torch.nn.utils import clip_grad_norm_
 import random
@@ -166,7 +167,7 @@ class DQN_Agent():
                         loss = self.learn(experiences)
                     self.Q_updates += 1
                     Q_losses.append(loss)
-
+                return np.mean(Q_losses)
 
 
     def act(self, state):
@@ -283,6 +284,7 @@ def run(frames=100000):
     max_episodes = 10000
     max_steps = 500
     score_list = []
+    best_score = -1000000
 
     tic = time.time()
 
@@ -290,6 +292,7 @@ def run(frames=100000):
 
         state = env.reset()
         score = 0
+        losses = []
 
         for j in range(max_steps):
 
@@ -299,7 +302,9 @@ def run(frames=100000):
             action = agent.act(state)
 
             next_state, reward, done, _ = env.step(action)
-            agent.step(state, action, reward, next_state, done)
+            loss = agent.step(state, action, reward, next_state, done)
+            if loss:
+                losses.append(loss)
 
             state = next_state
             score += reward
@@ -316,6 +321,10 @@ def run(frames=100000):
 
                 break
 
+        writer.add_scalar(name + '/reward', score, i)
+        writer.add_scalar(name + '/loss', np.mean(losses), i)
+        writer.flush()
+
         score_list.append(score)
 
         if i % 10 == 0:
@@ -324,6 +333,17 @@ def run(frames=100000):
             print("\033[0;97m", end='')
             print(" {}                                             ".format(i))
             print("total reward: {:.5}  avg reward (last 10): {:.5}".format(score,np.mean(score_list[max(0, i-10):(i+1)])))
+            if "--save" in sys.argv:
+                arg_index = sys.argv.index("--save")
+                save_name = sys.argv[arg_index + 1]
+                torch.save(agent.qnetwork_local.state_dict(), "savedir/"+save_name+"/local.pth")
+                torch.save(agent.qnetwork_target.state_dict(), "savedir/"+save_name+"/target.pth")
+        if ("--savemax" in sys.argv) and (score > best_score):
+            best_score = score
+            arg_index = sys.argv.index("--save")
+            save_name = sys.argv[arg_index + 1]
+            torch.save(agent.qnetwork_local.state_dict(), "savedir/"+save_name+"/local.pth")
+            torch.save(agent.qnetwork_target.state_dict(), "savedir/"+save_name+"/target.pth")
 
     return np.mean(score_list[-100:])
 
@@ -332,33 +352,37 @@ def run(frames=100000):
 if __name__ == "__main__":
 
     frames = 40000
-    mem = 100000
+    seed = np.random.randint(100000)
     per = False
-    batch_size = 128
+    BUFFER_SIZE = 100000
+    BATCH_SIZE = 128
+    LAYER_SIZE = 256
     nstep = 1
-    layer_size = 256
-    gamma = 0.99
-    tau = 0.01
-    learning_rate = 0.001
-    update_every = 1
-    n_updates = 3
-    seed = 0
+    GAMMA = 0.99
+    TAU = 0.01
+    LR = 0.001
+    UPDATE_EVERY = 1
+    NUPDATES = 3
+    name = "lunarLander"
 
-    seed = seed
-    BUFFER_SIZE = mem
-    per = per
-    BATCH_SIZE = batch_size
-    LAYER_SIZE = layer_size
-    nstep = nstep
-    GAMMA = gamma
-    TAU = tau
-    LR = learning_rate
-    UPDATE_EVERY = update_every
-    NUPDATES = n_updates
+    paramDict ={"seed":seed,
+                "BufferSize":BUFFER_SIZE,
+                "per":per,
+                "batch_size":BATCH_SIZE,
+                "layer_size":LAYER_SIZE,
+                "nStep":nstep,
+                "gamma":GAMMA,
+                "tau":TAU,
+                "learningRate":LR,
+                "updateEvery":UPDATE_EVERY,
+                "nUpdate":NUPDATES}
 
     np.random.seed(seed)
     env = LunarLanderContinuous()
-    writer = SummaryWriter('logdir/lunarLander')
+
+    now = datetime.now()
+    writer = SummaryWriter('logdir/'+ now.strftime("%Y%m%d-%H%M%S") + "/")
+    writer.add_hparams(paramDict,{})
 
     env.seed(seed)
     action_size     = env.action_space.shape[0]
@@ -381,10 +405,12 @@ if __name__ == "__main__":
     #writer.add_graph(agent.qnetwork_local)
     #writer.close()
 
+    if "--load" in sys.argv:
+        print("loading weights")
+        arg_index = sys.argv.index("--load")
+        save_name = sys.argv[arg_index + 1]
+        agent.qnetwork_local.load_state_dict(torch.load("savedir/" + save_name + "/local.pth"))
+        agent.qnetwork_target.load_state_dict(torch.load("savedir/" + save_name + "/target.pth"))
+        print("weights loaded")
 
-    t0 = time.time()
-    final_average100 = run(frames = frames)
-    t1 = time.time()
-
-    print("Training time: {}min".format(round((t1-t0)/60,2)))
-    torch.save(agent.qnetwork_local.state_dict(), "NAF_"+args.env+"_.pth")
+    run(frames = frames)
