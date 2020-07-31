@@ -124,6 +124,8 @@ a lire : [ce papier](https://arxiv.org/pdf/1909.12397.pdf)
 
 au vu des résultats du NAF, ya un truc de pas net dans cette implémentation...  
 Potentiellement la batch normalization qui est nécéssaire, sinon une erreur au pif au milieu de mon code...
+
+
 ---
 ### Requirements
 

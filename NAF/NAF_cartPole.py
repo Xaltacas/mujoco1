@@ -5,9 +5,8 @@ import torch.nn.functional as F
 import numpy as np
 import torch.optim as optim
 from torch.utils.tensorboard import SummaryWriter
-from ENV.custom_env import *
+from ENV.Continuous_CartPole import ContinuousCartPoleEnv
 from datetime import datetime
-
 
 from torch.nn.utils import clip_grad_norm_
 import random
@@ -168,9 +167,7 @@ class DQN_Agent():
                         loss = self.learn(experiences)
                     self.Q_updates += 1
                     Q_losses.append(loss)
-
                 return np.mean(Q_losses)
-
 
 
     def act(self, state):
@@ -294,13 +291,10 @@ def run(frames=100000):
     for i in range(max_episodes):
 
         state = env.reset()
-        state = np.concatenate([state["observation"],state["desired_goal"]])
         score = 0
-        steps = 0
         losses = []
 
         for j in range(max_steps):
-            steps = j
 
             if '--visu' in sys.argv:
                 env.render()
@@ -308,7 +302,6 @@ def run(frames=100000):
             action = agent.act(state)
 
             next_state, reward, done, _ = env.step(action)
-            next_state = np.concatenate([next_state["observation"],next_state["desired_goal"]])
             loss = agent.step(state, action, reward, next_state, done)
             if loss:
                 losses.append(loss)
@@ -339,7 +332,7 @@ def run(frames=100000):
             print("Episode:", end = "")
             print("\033[0;97m", end='')
             print(" {}                                             ".format(i))
-            print("steps: {}    total reward: {:.5}  avg reward (last 10): {:.5}".format(steps,score,np.mean(score_list[max(0, i-10):(i+1)])))
+            print("total reward: {:.5}  avg reward (last 10): {:.5}".format(score,np.mean(score_list[max(0, i-10):(i+1)])))
             if "--save" in sys.argv:
                 arg_index = sys.argv.index("--save")
                 save_name = sys.argv[arg_index + 1]
@@ -370,7 +363,7 @@ if __name__ == "__main__":
     LR = 0.001
     UPDATE_EVERY = 1
     NUPDATES = 3
-    name = "fetch"
+    name = "cartPole"
 
     paramDict ={"name":name,
                 "seed":seed,
@@ -386,17 +379,17 @@ if __name__ == "__main__":
                 "nUpdate":NUPDATES}
 
     np.random.seed(seed)
-    env = customEnv()
+    env = ContinuousCartPoleEnv()
 
     now = datetime.now()
     writer = SummaryWriter('logdir/'+ now.strftime("%Y%m%d-%H%M%S") + "/")
     writer.add_hparams(paramDict,{})
 
     env.seed(seed)
-    action_size = env.action_space.shape[0]
-    state_size = env.observation_space["observation"].shape[0] + env.observation_space["desired_goal"].shape[0]
+    action_size     = env.action_space.shape[0]
+    state_size = env.observation_space.shape[0]
 
-    agent = DQN_Agent(  state_size=state_size,
+    agent = DQN_Agent(state_size=state_size,
                         action_size=action_size,
                         layer_size=LAYER_SIZE,
                         BATCH_SIZE=BATCH_SIZE,
@@ -412,6 +405,7 @@ if __name__ == "__main__":
 
     #writer.add_graph(agent.qnetwork_local)
     #writer.close()
+
     if "--load" in sys.argv:
         print("loading weights")
         arg_index = sys.argv.index("--load")

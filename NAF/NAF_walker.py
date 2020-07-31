@@ -44,7 +44,7 @@ class NAF(nn.Module):
         """
 
         x = torch.relu(self.head_1(input_))
-        #x = self.bn1(x)
+        x = self.bn1(x)
         x = torch.relu(self.ff_1(x))
         action_value = torch.tanh(self.action_values(x))
         entries = torch.tanh(self.matrix_entries(x))
@@ -354,11 +354,11 @@ def run(frames=100000):
 if __name__ == "__main__":
 
     frames = 40000
-    seed = np.randint()
+    seed = np.random.randint(100000)
     per = False
     BUFFER_SIZE = 100000
     BATCH_SIZE = 128
-    LAYER_SIZE = 400
+    LAYER_SIZE = 1000
     nstep = 1
     GAMMA = 0.99
     TAU = 0.01
@@ -367,7 +367,8 @@ if __name__ == "__main__":
     NUPDATES = 3
     name = "walker"
 
-    paramDict ={"seed":seed,
+    paramDict ={"name":name,
+                "seed":seed,
                 "BufferSize":BUFFER_SIZE,
                 "per":per,
                 "batch_size":BATCH_SIZE,
@@ -387,7 +388,7 @@ if __name__ == "__main__":
     writer.add_hparams(paramDict,{})
 
     env.seed(seed)
-    action_size     = env.action_space.shape[0]
+    action_size = env.action_space.shape[0]
     state_size = env.observation_space.shape[0]
 
     agent = DQN_Agent(state_size=state_size,

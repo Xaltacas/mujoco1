@@ -356,7 +356,7 @@ if __name__ == "__main__":
     per = False
     BUFFER_SIZE = 100000
     BATCH_SIZE = 128
-    LAYER_SIZE = 256
+    LAYER_SIZE = 400
     nstep = 1
     GAMMA = 0.99
     TAU = 0.01
@@ -365,7 +365,8 @@ if __name__ == "__main__":
     NUPDATES = 3
     name = "lunarLander"
 
-    paramDict ={"seed":seed,
+    paramDict ={"name":name,
+                "seed":seed,
                 "BufferSize":BUFFER_SIZE,
                 "per":per,
                 "batch_size":BATCH_SIZE,

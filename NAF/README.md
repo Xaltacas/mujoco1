@@ -50,7 +50,12 @@ Résolution de bipedalWalker
 
 ### Observations sur fetch:
 
-multiplier l'action par une constante empêche de converger
+Multiplier l'action par une constante avant de l'envoyer a l'environement a l'air de causer des problèmes de convergence
+
+### Observations sur lunarLander:
+
+Après environ 200 episodes la loss commence à diverger, plus tard le model va lui aussi diverger.  
+La loss reviens petit a petit... attendre plus longtemps pour voir si on peut revenir vers quelque chose de stable?  
 
 ---
 ### Requirements
