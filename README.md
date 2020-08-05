@@ -4,6 +4,8 @@
 [le papier](https://arxiv.org/pdf/1509.02971v2.pdf)  
 [le dépot](https://github.com/shivaverma/OpenAIGym/)
 
+[une critique](https://arxiv.org/pdf/1911.11679.pdf)
+
 #### NAF :
 [le papier](https://arxiv.org/pdf/1603.00748.pdf)  
 [un dépot](https://github.com/axnedergaard/normalized-advantage-functions)  

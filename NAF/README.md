@@ -54,7 +54,7 @@ Multiplier l'action par une constante avant de l'envoyer a l'environement a l'ai
 
 ### Observations sur lunarLander:
 
-Après environ 200 episodes la loss commence à diverger, plus tard le model va lui aussi diverger.  
+Après environ quelques centaines d'épisodes la loss commence à diverger, plus tard le model va lui aussi diverger.  
 La loss reviens petit a petit... attendre plus longtemps pour voir si on peut revenir vers quelque chose de stable?  
 
 ---
