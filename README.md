@@ -11,4 +11,8 @@
 [un dépot](https://github.com/axnedergaard/normalized-advantage-functions)  
 [un autre depot](https://github.com/BY571/Normalized-Advantage-Function-NAF-)  
 
+#### une piste?:
+[ce papier](https://arxiv.org/pdf/1909.12397.pdf)
+
+
 ### autres tests

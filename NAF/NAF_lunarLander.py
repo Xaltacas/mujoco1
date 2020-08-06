@@ -95,6 +95,7 @@ class DQN_Agent():
                  BUFFER_SIZE,
                  PER,
                  LR,
+                 EPS,
                  Nstep,
                  TAU,
                  GAMMA,
@@ -135,7 +136,7 @@ class DQN_Agent():
         # Q-Network
         self.qnetwork_local = NAF(state_size, action_size,layer_size, seed)
         self.qnetwork_target = NAF(state_size, action_size,layer_size, seed)
-        self.optimizer = optim.Adam(self.qnetwork_local.parameters(), lr=LR)
+        self.optimizer = optim.Adam(self.qnetwork_local.parameters(), lr=LR, eps=EPS)
         print(self.qnetwork_local)
 
         # Replay memory
@@ -361,6 +362,7 @@ if __name__ == "__main__":
     GAMMA = 0.99
     TAU = 0.01
     LR = 0.001
+    EPS = 0.1
     UPDATE_EVERY = 1
     NUPDATES = 3
     name = "lunarLander"
@@ -375,6 +377,7 @@ if __name__ == "__main__":
                 "gamma":GAMMA,
                 "tau":TAU,
                 "learningRate":LR,
+                "epsilon":EPS,
                 "updateEvery":UPDATE_EVERY,
                 "nUpdate":NUPDATES}
 
@@ -396,6 +399,7 @@ if __name__ == "__main__":
                         BUFFER_SIZE=BUFFER_SIZE,
                         PER=per,
                         LR=LR,
+                        EPS=EPS,
                         Nstep=nstep,
                         TAU=TAU,
                         GAMMA=GAMMA,
