@@ -13,6 +13,3 @@
 
 #### une piste?:
 [ce papier](https://arxiv.org/pdf/1909.12397.pdf)
-
-
-### autres tests

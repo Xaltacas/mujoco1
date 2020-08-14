@@ -362,7 +362,7 @@ if __name__ == "__main__":
     GAMMA = 0.99
     TAU = 0.01
     LR = 0.001
-    EPS = 0.1
+    EPS = 0.00000001
     UPDATE_EVERY = 1
     NUPDATES = 3
     name = "lunarLander"
