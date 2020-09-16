@@ -1,4 +1,4 @@
-# Le gros des codes que j'ai fait pendant mon stage
+# Le gros des codes que j'ai fais pendant mon stage
 ## implémentation de DeepRL pour résoudre des environment gym/mujoco:  
 #### DDPG :
 [le papier](https://arxiv.org/pdf/1509.02971v2.pdf)  
